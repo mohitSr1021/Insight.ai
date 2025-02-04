@@ -1,3 +1,4 @@
+import { message } from 'antd';
 import axios from 'axios';
 
 // an Axios instance
@@ -8,7 +9,7 @@ const axiosInstance = axios.create({
 // Request Interceptor
 axiosInstance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('token');
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
         }
@@ -28,9 +29,13 @@ axiosInstance.interceptors.response.use(
     },
     (error) => {
         if (error.response) {
-            if (error.response.status === 401) {
+            if (error.response.status === 401 && error.response.data.error === "Token has expired, please log in again") {
                 console.error('Unauthorized - Token expired');
-                window.location.href = '/auth';
+                message.error(error.response.data.error, 4);
+                setTimeout(() => {
+                    localStorage.clear();
+                    window.location.href = '/auth';
+                }, 2500);
             } else {
                 console.error('Error Response:', error.response);
             }
@@ -42,5 +47,6 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
 
 export default axiosInstance;
