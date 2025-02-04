@@ -5,6 +5,7 @@ import SuspenseWrapper from "./SuspendWrapper.tsx";
 import Home from "../pages/protected-pages/Home.tsx";
 import ProtectedAuth from "./auth-protect/ProtectedAuth.tsx";
 import { ProtectedRoute } from "./routes-protect/ProtectedRoute.tsx";
+import Favourites from "../pages/protected-pages/Favourites.tsx";
 
 const AuthPage = lazy(() => import("../pages/auth-pages/Auth.tsx"));
 
@@ -40,6 +41,22 @@ const routes: RouteObject[] = [
                     <ProtectedRoute>
                         <SuspenseWrapper>
                             <Home />
+                        </SuspenseWrapper>
+                    </ProtectedRoute>
+                ),
+            },
+        ],
+    },
+    {
+        path: "/favourites",
+        element: <Favourites />,
+        children: [
+            {
+                path: "",
+                element: (
+                    <ProtectedRoute>
+                        <SuspenseWrapper>
+                            <Favourites />
                         </SuspenseWrapper>
                     </ProtectedRoute>
                 ),
