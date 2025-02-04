@@ -1,23 +1,25 @@
+
+import { FC } from "react"
 import { MoreHorizontal, ImageIcon, Play } from "lucide-react"
-import { Card, Button, Typography } from "antd"
-import { formatDistance } from "date-fns"
+// import { formatDistance } from "date-fns"
+import { Note } from "../../pages/protected-pages/Home"
 
-const { Text } = Typography
+type NoteCardProps = Note
 
-interface NoteCardProps {
-  title: string
-  content: string
-  timestamp: Date
-  duration?: string
-  imageCount?: number
-  type: "audio" | "text"
-}
-
-export default function NoteCard({ title, content, timestamp, duration, imageCount, type }: NoteCardProps) {
+const NoteCard: FC<NoteCardProps> = ({ 
+  title, 
+  content, 
+  // timestamp, 
+  duration, 
+  imageCount, 
+  type 
+}) => {
   return (
-    <Card className="mb-4 min-h-80 hover:shadow-md transition-shadow p-4">
+    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 min-h-80">
       <div className="flex justify-between items-start mb-2">
-        <Text className="text-gray-500 text-sm">{formatDistance(timestamp, new Date(), { addSuffix: true })}</Text>
+        <span className="text-gray-500 text-sm">
+          {/* {formatDistance(new Date(timestamp), new Date(), { addSuffix: true })} */}
+        </span>
         {duration && (
           <div className="flex items-center gap-1 text-gray-500">
             <Play size={14} />
@@ -33,13 +35,20 @@ export default function NoteCard({ title, content, timestamp, duration, imageCou
         {imageCount && (
           <div className="flex items-center gap-1 text-gray-500">
             <ImageIcon size={16} />
-            <span className="text-sm">{imageCount} Image</span>
+            <span className="text-sm">{imageCount} Image{imageCount !== 1 ? 's' : ''}</span>
           </div>
         )}
-        {type === "text" && <Text className="text-gray-500">Text</Text>}
-        <Button type="text" icon={<MoreHorizontal size={16} />} className="ml-auto" />
+        {type === "text" && <span className="text-gray-500">Text</span>}
+        <button 
+          type="button"
+          className="ml-auto p-2 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="More options"
+        >
+          <MoreHorizontal size={16} />
+        </button>
       </div>
-    </Card>
+    </div>
   )
 }
 
+export default NoteCard

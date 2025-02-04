@@ -2,23 +2,28 @@ import { Mic, ImageIcon, Link2, X } from "lucide-react"
 import { Button, Avatar, Tooltip, message, Input } from "antd"
 import { useState, useEffect, useRef } from "react"
 import type React from "react"
+import { RootState, useAppDispatch, useAppSelector } from "../../redux/store/rootStore"
+import useLayoutStatus from "../../Hooks/useLayoutStatus"
+import { NoteComposerProps } from "./NoteComposer.types"
+import { createNewNote } from "../../redux/api/noteAPI"
 
-interface NoteComposerProps {
-  onSave?: (note: { content: string; type: "text" | "recording"; url?: string; image?: File }) => void
-}
+
 
 export default function NoteComposer({ onSave }: NoteComposerProps) {
-  const [isRecording, setIsRecording] = useState(false)
-  const [recordingTime, setRecordingTime] = useState(0)
-  const [showUrlInput, setShowUrlInput] = useState(false)
-  const [noteContent, setNoteContent] = useState("")
   const [url, setUrl] = useState("")
+  const [noteContent, setNoteContent] = useState("")
+  const [recordingTime, setRecordingTime] = useState(0)
   const [image, setImage] = useState<File | null>(null)
+  const [isRecording, setIsRecording] = useState(false)
+  const [showUrlInput, setShowUrlInput] = useState(false)
 
   const timerRef = useRef()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
+  const authUser = useAppSelector((state: RootState) => state.auth)
+  const { current } = useLayoutStatus()
+  const dispatch = useAppDispatch()
 
   useEffect(() => {
     if (isRecording) {
@@ -81,21 +86,27 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
 
   const handleSave = () => {
     if (noteContent.trim() || url.trim() || image) {
-      onSave?.({
-        content: noteContent,
-        type: "text",
-        url: url.trim() || undefined,
-        image: image || undefined,
-      })
-      setNoteContent("")
-      setUrl("")
-      setImage(null)
-      setShowUrlInput(false)
-      message.success("Note saved successfully")
+      const noteData = {
+        content: noteContent.trim(),
+        ...(url.trim() && { link: url.trim() }), // if its present then include
+      };
+
+      // Dispatch the createNewNote API
+      dispatch(createNewNote(noteData))
+        .then(() => {
+          setNoteContent('');
+          setUrl('');
+          setImage(null);
+          setShowUrlInput(false);
+          message.success('Note saved successfully');
+        })
+        .catch((error) => {
+          message.error(error?.message || 'Failed to save note');
+        });
     } else {
-      message.warning("Please add some content before saving")
+      message.warning('Please add some content before saving');
     }
-  }
+  };
 
   const handleClearUrl = () => {
     setUrl("")
@@ -107,10 +118,13 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-4">
-      <div className="max-w-fit mx-auto flex items-center rounded-lg border border-gray-200 hover:border-gray-300 bg-white relative py-2 px-4 flex-col md:flex-row">
+    <div className={`fixed bottom-0 left-0 right-0 p-4 ${(current === "sm" || current === "xs") ? "backdrop-blur-md" : ""}`}>
+      <div className={`max-w-fit mx-auto flex items-center rounded-lg border border-gray-200 hover:border-gray-300 bg-white relative py-2 px-4 flex-col md:flex-row ${(current === "sm" || current === "xs") ? "gap-2" : "gap-3"}`}>
         <div className="flex items-center gap-2 w-full">
-          <Avatar>M</Avatar>
+          <Tooltip title="user">
+            <Avatar className="cursor-pointer">{authUser?.user?.userName[0].toUpperCase()}</Avatar>
+          </Tooltip>
+
           <Input.TextArea
             className="flex-1 w-full !min-w-72"
             placeholder="Write a note..."
@@ -155,7 +169,6 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
         <div className="w-full flex items-center justify-center gap-4">
           <div className="flex items-center gap-2">
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
-
             <Tooltip title="Add image">
               <Button
                 type="text"
