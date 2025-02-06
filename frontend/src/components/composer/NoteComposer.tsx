@@ -17,13 +17,14 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
   const [isRecording, setIsRecording] = useState(false)
   const [showUrlInput, setShowUrlInput] = useState(false)
 
-  const timerRef = useRef()
+  const timerRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const authUser = useAppSelector((state: RootState) => state.auth)
   const { current } = useLayoutStatus()
   const dispatch = useAppDispatch()
+  const { isLoading } = useAppSelector((state) => state.notes)
 
   useEffect(() => {
     if (isRecording) {
@@ -93,12 +94,12 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
 
       // Dispatch the createNewNote API
       dispatch(createNewNote(noteData))
-        .then(() => {
+        .then((noteData) => {
           setNoteContent('');
           setUrl('');
           setImage(null);
           setShowUrlInput(false);
-          message.success('Note saved successfully');
+          message.success(noteData.payload.message);
         })
         .catch((error) => {
           message.error(error?.message || 'Failed to save note');
@@ -118,8 +119,8 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
   }
 
   return (
-    <div className={`fixed bottom-0 left-0 right-0 p-4 ${(current === "sm" || current === "xs") ? "backdrop-blur-md" : ""}`}>
-      <div className={`max-w-fit mx-auto flex items-center rounded-lg border border-gray-200 hover:border-gray-300 bg-white relative py-2 px-4 flex-col md:flex-row ${(current === "sm" || current === "xs") ? "gap-2" : "gap-3"}`}>
+    <div className={`fixed bottom-0 left-0 right-0 p-4 ${(current === "sm" || current === "xs") ? "backdrop-blur-md !p-0" : ""}`}>
+      <div className={`flex items-center border border-gray-200 hover:border-gray-300 bg-white relative py-2 px-4 flex-col md:flex-row ${(current === "sm" || current === "xs") ? "gap-2 w-full max-w-full py-4 rounded-t-xl" : "gap-3 mx-auto max-w-fit rounded-lg"}`}>
         <div className="flex items-center gap-2 w-full">
           <Tooltip title="user">
             <Avatar className="cursor-pointer">{authUser?.user?.userName[0].toUpperCase()}</Avatar>
@@ -131,7 +132,7 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
             value={noteContent}
             onChange={(e) => setNoteContent(e.target.value)}
             autoSize={{ minRows: 1, maxRows: 4 }}
-            disabled={isRecording}
+            disabled={isRecording || isLoading}
           />
         </div>
 
@@ -169,7 +170,7 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
         <div className="w-full flex items-center justify-center gap-4">
           <div className="flex items-center gap-2">
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
-            <Tooltip title="Add image">
+            <Tooltip className="!bg-amber-200" title="Add image - comming soon">
               <Button
                 type="text"
                 icon={<ImageIcon className="text-gray-600" size={20} />}
@@ -189,19 +190,22 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button onClick={handleSave} disabled={isRecording || (!noteContent.trim() && !url.trim() && !image)}>
+            <Button onClick={handleSave} disabled={isRecording || isLoading || (!noteContent.trim() && !url.trim() && !image)}>
               Save
             </Button>
 
-            <Button
-              type="primary"
-              icon={<Mic size={20} />}
-              onClick={isRecording ? stopRecording : startRecording}
-              className={`${isRecording ? "bg-red-600 hover:bg-red-700 animate-pulse" : "bg-red-500 hover:bg-red-600"
-                } transition-all duration-200`}
-            >
-              {isRecording ? `Recording ${recordingTime}s` : "Record"}
-            </Button>
+            <Tooltip title="comming soon">
+              <Button
+                type="primary"
+                icon={<Mic size={20} />}
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`${isRecording ? "bg-red-600 hover:bg-red-700 animate-pulse" : "bg-red-500 hover:bg-red-600"
+                  } transition-all duration-200`}
+                disabled={true}
+              >
+                {isRecording ? `Recording ${recordingTime}s` : "Record"}
+              </Button>
+            </Tooltip>
           </div>
         </div>
       </div>

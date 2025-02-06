@@ -3,17 +3,15 @@ import axiosInstance from "../../axiosConfig/axios";
 
 // Fetch notes API thunk
 export const fetchNotes = createAsyncThunk(
-  'notes/fetchNotes',
+  "notes/fetchNotes",
   async (userId: string, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(`/notes/u/${userId}`);
       return response.data;
     } catch (error: any) {
       if (error.response) {
-        // If the error contains a response, return the error message
         return rejectWithValue(error.response.data);
       } else {
-        // If no response from the server, return a network error
         return rejectWithValue({ message: "Network error, please try again." });
       }
     }
@@ -22,7 +20,7 @@ export const fetchNotes = createAsyncThunk(
 
 // Create a new note API thunk
 export const createNewNote = createAsyncThunk(
-  'notes/createNewNote',
+  "notes/createNewNote",
   async (noteData: { content: string; link?: string }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post("/notes/create", noteData);
@@ -39,10 +37,16 @@ export const createNewNote = createAsyncThunk(
 
 // Update an existing note API thunk
 export const updateExistingNote = createAsyncThunk(
-  'notes/updateExistingNote',
-  async (noteData: { noteId: string; title: string; content: string; link: string }, { rejectWithValue }) => {
+  "notes/updateExistingNote",
+  async (
+    noteData: { noteId: string; title: string; content: string; link: string },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await axiosInstance.put(`/update/${noteData.noteId}`, noteData);
+      const response = await axiosInstance.put(
+        `/update/${noteData.noteId}`,
+        noteData
+      );
       return response.data;
     } catch (error: any) {
       if (error.response) {
@@ -56,10 +60,10 @@ export const updateExistingNote = createAsyncThunk(
 
 // Delete an existing note API thunk
 export const deleteExistingNote = createAsyncThunk(
-  'notes/deleteExistingNote',
+  "notes/deleteExistingNote",
   async (noteId: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.delete(`/delete/${noteId}`);
+      const response = await axiosInstance.delete(`/notes/remove/${noteId}`);
       return response.data;
     } catch (error: any) {
       if (error.response) {

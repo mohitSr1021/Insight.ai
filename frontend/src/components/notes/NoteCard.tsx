@@ -1,155 +1,111 @@
 import type React from "react"
 import { useState } from "react"
-import { Card, Dropdown, message, Typography, Space, Tag } from "antd"
-import { MoreHorizontal, Copy, Edit, LinkIcon, Clock } from "lucide-react"
-import type { MenuProps } from "antd"
-import EditNoteModal from "../Modal/EditNoteModal"
+import { useAppDispatch } from "../../redux/store/rootStore"
+import { openEditModal } from "../../redux/slices/NoteSlice/noteSlice"
+import { Edit2, MoreVertical, Trash2, Link as LinkIcon, ExternalLink,CopyIcon } from "lucide-react"
+import { formatDate, NoteCardProps } from "./NoteCard.types"
+import { deleteExistingNote } from "../../redux/api/noteAPI"
+import { message } from "antd"
 
-const { Text, Paragraph } = Typography
+const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
+  const dispatch = useAppDispatch()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-interface Note {
-  _id: string
-  title: string
-  content: string
-  createdAt: string
-  updatedAt: string
-  link?: string
-  tags?: string[]
-}
-
-interface NoteCardProps {
-  note: Note
-  onUpdate: (note: Note) => void
-}
-
-const NoteCard: React.FC<NoteCardProps> = ({ note, onUpdate }) => {
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(note.content)
-    message.success("Copied to clipboard!")
-  }
-
-  const handleSave = async (updatedNote: Partial<Note>) => {
+  const handleDeleteNote = async (noteId: string) => {
     try {
-      const response = await fetch(`/api/notes/${note._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedNote),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to update note")
-      }
-
-      const data = await response.json()
-      onUpdate(data)
-      message.success("Note updated successfully!")
-      setIsEditModalOpen(false)
+      const response = await dispatch(deleteExistingNote(noteId)).unwrap();
+      message.success(response.message);
     } catch (error) {
-      console.error("Error updating note:", error)
-      message.error("Failed to update note")
+      console.error("Error while deleting note :[", error);
+      if (error instanceof Error) {
+        message.error(error.message || "Failed to delete note");
+      } else {
+        message.error("Failed to delete note");
+      }
     }
-  }
+  };
 
-  const items: MenuProps["items"] = [
-    {
-      key: "copy",
-      icon: <Copy size={16} />,
-      label: "Copy",
-      onClick: handleCopy,
-    },
-    {
-      key: "edit",
-      icon: <Edit size={16} />,
-      label: "Edit",
-      onClick: () => setIsEditModalOpen(true),
-    },
-  ]
-
-  const cardTitle = (
-    <div className="flex justify-between items-center">
-      <Text strong ellipsis style={{ maxWidth: 210 }} title={note.title}>
-        {note.title}
-      </Text>
-      <Dropdown menu={{ items }} placement="bottomRight" trigger={["click"]}>
-        <MoreHorizontal className="cursor-pointer text-gray-500 hover:text-gray-700" size={20} />
-      </Dropdown>
-    </div>
-  )
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffTime = Math.abs(now.getTime() - date.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-    if (diffDays === 1) {
-      return "Yesterday"
-    } else if (diffDays <= 7) {
-      return `${diffDays} days ago`
-    } else {
-      return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
-    }
-  }
 
   return (
-    <Card
-      title={cardTitle}
-      className="w-full !h-[calc(100% - 46px)] min-h-[240px] shadow-sm hover:shadow-md transition-shadow duration-300 !p-0"
-    >
-      <div className="flex flex-col h-full">
-        <Paragraph ellipsis={{ rows: 3 }} className="flex-grow mb-2">
-          {note.content}
-        </Paragraph>
-        <div className="mt-auto">
-          {note.link && (
-            <div className="mb-2">
-              <a
-                href={note.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
-              >
-                <LinkIcon size={14} className="mr-1" />
-                <Text ellipsis style={{ maxWidth: "100%" }}>
-                  {note.link}
-                </Text>
-              </a>
-            </div>
-          )}
-          <Space size={[0, 4]} wrap className="mb-2">
-            {note.tags?.map((tag, index) => (
-              <Tag key={`${tag}-${index}`} color="blue">
-                {tag}
-              </Tag>
-            ))}
-          </Space>
-          <div className="flex items-center text-gray-500 text-xs">
-            <Clock size={14} className="mr-1" />
-            <span>Created {formatDate(note.createdAt)}</span>
+    <div className="group relative bg-white min-h-[280px] rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-gray-100 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
+
+      {/* Top gradient line */}
+      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+      <div className="p-6 flex flex-col h-full">
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="font-bold text-xl text-gray-900 tracking-tight line-clamp-2 flex-grow pr-8">{note.title}</h3>
+          <div className="relative flex items-center gap-1">
+            <button
+              onClick={() => {
+                if (note?.content) {
+                  navigator.clipboard.writeText(note.content);
+                  message.success("Note copied to clipboard!");
+                } else {
+                  message.error("No content to copy!");
+                }
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <CopyIcon size={18} className="text-gray-500" />
+            </button>
+
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <MoreVertical size={18} className="text-gray-500" />
+            </button>
+
+            {isMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden py-1">
+                {/* Edit Note Button */}
+                <button
+                  onClick={() => {
+                    dispatch(openEditModal(note._id));
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Edit2 size={15} className="mr-2.5" /> Edit Note
+                </button>
+
+                {/* Delete Note Button */}
+                <button
+                  onClick={() => handleDeleteNote(note._id)}
+                  className="flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 size={15} className="mr-2.5" /> Delete Note
+                </button>
+              </div>
+            )}
+
           </div>
-          {note.updatedAt !== note.createdAt && (
-            <div className="flex items-center text-gray-500 text-xs mt-1">
-              <Clock size={14} className="mr-1" />
-              <span>Updated {formatDate(note.updatedAt)}</span>
-            </div>
-          )}
+        </div>
+
+        <p className="text-gray-600 flex-grow line-clamp-3">{note.content}</p>
+
+        {note.link && (
+          <a
+            href={note.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center text-sm text-blue-600 hover:text-blue-700 py-2 group/link"
+          >
+            <LinkIcon size={14} className="mr-1.5" />
+            <span className="truncate flex-grow">{note.link}</span>
+            <ExternalLink size={12} className="ml-1 opacity-0 group-hover/link:opacity-100 transition-opacity" />
+          </a>
+        )}
+
+        <div className="flex justify-between items-center text-xs text-gray-500 pt-2 border-t border-gray-100">
+          <span>Created: {formatDate(note.createdAt)}</span>
+          <span className="text-gray-400">#...{note._id.slice(-4)}</span>
         </div>
       </div>
-      {isEditModalOpen && (
-        <EditNoteModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          note={note}
-          onSave={handleSave}
-        />
-      )}
-    </Card>
+    </div >
   )
 }
 
 export default NoteCard
-

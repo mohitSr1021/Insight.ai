@@ -18,10 +18,6 @@ const SortButton: React.FC<SortButtonProps> = ({ isAscending, onClick }) => {
           font-medium
           text-md        
           transition-all duration-300 ease-in-out
-          ${isAscending
-                    ? "bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 text-indigo-700/55"
-                    : "bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 text-indigo-700/55"
-                }
           before:absolute
           before:inset-0
           before:rounded-full
@@ -31,10 +27,11 @@ const SortButton: React.FC<SortButtonProps> = ({ isAscending, onClick }) => {
           before:opacity-0
           hover:before:opacity-5
           focus:outline-none 
-          ${!isAscending ? "focus:ring-2 focus:ring-blue-200 focus:ring-offset-2" : ""}
           disabled:opacity-50 
           disabled:cursor-not-allowed
           disabled:active:scale-100
+          ${isAscending ? "focus:ring-2 focus:ring-blue-200 focus:ring-offset-2" : ""}
+          ${isAscending ? "bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 text-indigo-700/55" : "bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 text-indigo-700/55"}
         `}
             aria-label={`Sort ${isAscending ? "newest first" : "oldest first"}`}
             title={`Sort ${isAscending ? "newest first" : "oldest first"}`}

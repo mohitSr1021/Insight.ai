@@ -1,97 +1,121 @@
-import { useEffect } from 'react';
-import { X, Link as LinkIcon } from 'lucide-react';
-import { Modal, Input, Form, Tooltip } from 'antd';
+import type React from "react"
+import { useState, useEffect } from "react"
+import { useAppSelector } from "../../redux/store/rootStore"
+// import { updateExistingNote } from "../../redux/api/noteAPI"
+import { X, Save } from "lucide-react"
+import Spinner from "../Spinner/Spinner"
 
-const { TextArea } = Input;
+interface Note {
+    _id: string
+    title: string
+    content: string
+    userId: string
+    createdAt: string
+    updatedAt: string
+    __v: number
+}
 
-const EditNoteModal = ({ isOpen, onClose, note, onSave }) => {
-    const [form] = Form.useForm();
+interface EditNoteModalProps {
+    isOpen: boolean
+    onClose: () => void
+    note: Note
+}
+
+const EditNoteModal: React.FC<EditNoteModalProps> = ({ isOpen, onClose, note }) => {
+    const [title, setTitle] = useState(note.title)
+    const [content, setContent] = useState(note.content)
+    // const dispatch = useAppDispatch()
+    const isLoading = useAppSelector((state) => state.notes.isLoading)
 
     useEffect(() => {
-        if (note && isOpen) {
-            form.setFieldsValue({
-                title: note.title,
-                content: note.content,
-                link: note.link || ''
-            });
-        }
-    }, [note, isOpen, form]);
+        setTitle(note.title)
+        setContent(note.content)
+    }, [note])
 
-    const handleSubmit = async () => {
-        try {
-            const values = await form.validateFields();
-            onSave({ ...note, ...values });
-            onClose();
-        } catch (error) {
-            console.error('Validation failed:', error);
-        }
-    };
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        // dispatch(updateExistingNote({ noteId: note._id, title, content, link: note.link }))
+        onClose()
+    }
+
+    if (!isOpen) return null
 
     return (
-        <div className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md ${isOpen ? 'visible' : 'invisible'}`}>
-            <Modal
-                className="custom-modal"
-                title={
-                    <div className="flex justify-between items-center px-2 py-4">
-                        <span className="text-xl font-semibold text-gray-800">Edit Note</span>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div 
+                className="bg-white/95 rounded-3xl shadow-2xl w-full max-w-2xl border border-gray-200/70 transform transition-all duration-300 scale-100"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex justify-between items-center border-b border-gray-200/80 px-8 py-6">
+                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Edit Note</h2>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-500 hover:text-gray-800 transition-all duration-300 rounded-full hover:bg-gray-100 p-2.5"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                    <div>
+                        <label htmlFor="title" className="block text-sm font-semibold text-gray-700 mb-2">
+                            Title
+                        </label>
+                        <input
+                            type="text"
+                            id="title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label htmlFor="content" className="block text-sm font-semibold text-gray-700 mb-2">
+                            Content
+                        </label>
+                        <textarea
+                            id="content"
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            rows={8}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 resize-none"
+                            required
+                        />
+                    </div>
+
+                    <div className="flex justify-end items-center space-x-4 pt-4">
                         <button
+                            type="button"
                             onClick={onClose}
-                            className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200 ease-in-out"
+                            className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200"
+                            disabled={isLoading}
                         >
-                            <X className="h-5 w-5 text-gray-500 hover:text-gray-700" />
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 flex items-center gap-2"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Spinner size="small" />
+                                    <span>Saving...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Save size={16} />
+                                    <span>Save Changes</span>
+                                </>
+                            )}
                         </button>
                     </div>
-                }
-                open={isOpen}
-                onCancel={onClose}
-                onOk={handleSubmit}
-                okText="Save Changes"
-                cancelText="Cancel"
-                width={600}
-                centered
-                closeIcon={null}
-            >
-                <Form form={form} layout="vertical" className="space-y-4">
-                    <Form.Item
-                        name="title"
-                        label={<span className="text-gray-700 font-medium">Title</span>}
-                        rules={[{ required: true, message: 'Please enter a title' }]}
-                    >
-                        <Input placeholder="Enter note title" className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-200" />
-                    </Form.Item>
-                    
-                    <Form.Item
-                        name="content"
-                        label={<span className="text-gray-700 font-medium">Content</span>}
-                        rules={[{ required: true, message: 'Please enter note content' }]}
-                    >
-                        <TextArea rows={6} placeholder="Enter note content" className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-200" />
-                    </Form.Item>
-                    
-                    <Form.Item
-                        name="link"
-                        label={
-                            <div className="flex items-center gap-2">
-                                <LinkIcon size={16} className="text-gray-500" />
-                                <span className="text-gray-700 font-medium">Link (Optional)</span>
-                            </div>
-                        }
-                        rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
-                    >
-                        <Input
-                            placeholder="https://example.com"
-                            className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                            suffix={
-                                <Tooltip title="Add a related link to your note">
-                                    <LinkIcon size={16} className="text-gray-400" />
-                                </Tooltip>
-                            }
-                        />
-                    </Form.Item>
-                </Form>
-            </Modal>
+                </form>
+            </div>
         </div>
-    );
-};
+    )
+}
 
-export default EditNoteModal;
+export default EditNoteModal

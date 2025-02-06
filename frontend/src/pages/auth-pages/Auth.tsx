@@ -11,11 +11,11 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
+  const { isLoading, error } = useAppSelector((state) => state.auth) as { isLoading: boolean; error: { message: string } | string | null };
 
   // Password validation for signup
   const validatePassword = ({ getFieldValue }: { getFieldValue: (field: string) => string }) => ({
-    validator(_, value: string) {
+    validator(_: any, value: string) {
       if (!value || getFieldValue('userPassword') === value) {
         return Promise.resolve();
       }

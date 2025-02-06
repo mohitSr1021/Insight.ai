@@ -31,34 +31,3 @@ body {
 .scrollbar-custom::-webkit-scrollbar-track {
   background-color: transparent;
 }
-
-.custom-modal .ant-modal-content {
-  border-radius: 16px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.custom-modal .ant-modal-header {
-  border-bottom: 1px solid #f0f0f0;
-  border-radius: 16px 16px 0 0;
-}
-
-.custom-modal .ant-modal-footer {
-  border-top: 1px solid #f0f0f0;
-  border-radius: 0 0 16px 16px;
-}
-
-.custom-modal .ant-btn {
-  border-radius: 8px;
-  transition: all 0.2s;
-}
-
-.custom-modal .ant-btn-primary {
-  background: #1890ff;
-  border-color: #1890ff;
-}
-
-.custom-modal .ant-btn-primary:hover {
-  background: #40a9ff;
-  border-color: #40a9ff;
-  transform: translateY(-1px);
-}
