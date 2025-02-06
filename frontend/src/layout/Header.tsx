@@ -1,29 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Search, FilterIcon } from "lucide-react";
 import SortButton from "../components/Buttons/SortButton";
 import useLayoutStatus from "../Hooks/useLayoutStatus";
+import { useAppDispatch, useAppSelector } from "../redux/store/rootStore";
+import { selectSortOrder, toggleSortOrder } from "../redux/slices/NoteSlice/noteSlice";
+import { Tooltip } from "antd";
 
-interface Note {
-  title: string;
-  content: string;
-  type: string;
-  timestamp: Date;
-}
-
-interface HeaderProps {
-  notes: Note[];
-  setFilteredNotes: (notes: Note[]) => void;
-}
-
-const Header: React.FC<HeaderProps> = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isAscending, setIsAscending] = useState(true);
-  const [filterType, setFilterType] = useState("all");
+const Header = () => {
+  const dispatch = useAppDispatch()
   const { current } = useLayoutStatus();
-
-  const toggleSortOrder = () => {
-    setIsAscending(!isAscending);
-  };
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const sortOrder = useAppSelector(selectSortOrder);
 
   return (
     <header className="flex flex-col md:flex-row items-center justify-between gap-4 px-4 py-4 border-gray-200">
@@ -63,9 +51,10 @@ const Header: React.FC<HeaderProps> = () => {
             }`}
         >
           {/* Filter Dropdown */}
-          <div className="relative">
-            <select
-              className="
+          <Tooltip title={"comming soon"}>
+            <div className="relative">
+              <select
+                className="
               appearance-none
               pl-3 pr-10
               py-2
@@ -83,26 +72,30 @@ const Header: React.FC<HeaderProps> = () => {
               disabled:opacity-50 
               disabled:cursor-not-allowed
             "
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-            >
-              <option value="all" className="text-gray-900">
-                All Types
-              </option>
-              <option value="text" className="text-gray-900">
-                Text Notes
-              </option>
-              <option value="audio" className="text-gray-900">
-                Audio Notes
-              </option>
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-              <FilterIcon className="w-5 h-5 text-indigo-700/55" />
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                disabled={true}
+              >
+                <option value="all" className="text-gray-900">
+                  All Types
+                </option>
+                <option value="text" className="text-gray-900">
+                  Text Notes
+                </option>
+                <option value="audio" className="text-gray-900">
+                  Audio Notes
+                </option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                <FilterIcon className="w-5 h-5 text-indigo-700/55" />
+              </div>
             </div>
-          </div>
+          </Tooltip>
           {/* Sort Button */}
           <div className="w-full md:w-auto md:mt-0">
-            <SortButton isAscending={isAscending} onClick={toggleSortOrder} />
+            <SortButton isAscending={sortOrder === "asc"} onClick={() => {
+              dispatch(toggleSortOrder())
+            }} />
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Home, Star, MenuIcon, X, LogOut } from 'lucide-react'
-import { Link, NavLink } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import useLayoutStatus from '../Hooks/useLayoutStatus'
 
 const Sidebar = () => {
