@@ -1,37 +1,63 @@
 import { message } from 'antd';
-import axios from 'axios';
+import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
-// an Axios instance
+interface CustomInternalAxiosRequestConfig extends InternalAxiosRequestConfig {
+    timeoutWarning?: NodeJS.Timeout;
+}
+
 const axiosInstance = axios.create({
     baseURL: `${import.meta.env.VITE_INSIGHT_BACKEND}/api/${import.meta.env.VITE_API_VERSION}`,
+    timeout: 30000
 });
 
-// Request Interceptor
+let warningDisplayed = false;
+let warningMessage: (() => void) | null = null;
+
 axiosInstance.interceptors.request.use(
-    (config) => {
+    (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
         const token = localStorage.getItem('token');
         if (token) {
-            config.headers['Authorization'] = `Bearer ${token}`;
+            config.headers.Authorization = `Bearer ${token}`;
         }
-        console.log('Request sent: ', config);
+
+        const customConfig = config as CustomInternalAxiosRequestConfig;
+        customConfig.timeoutWarning = setTimeout(() => {
+            if (!warningDisplayed) {
+                warningDisplayed = true;
+                warningMessage = message.loading('This request is taking longer than usual (15-20 seconds expected). Please wait...', 0);
+            }
+        }, 10000);
+
+        config.timeout = 20000;
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error: AxiosError) => Promise.reject(error)
 );
 
-// Response Interceptor
 axiosInstance.interceptors.response.use(
-    (response) => {
-        console.log('Response received: ', response);
+    (response: AxiosResponse) => {
+        const config = response.config as CustomInternalAxiosRequestConfig;
+        clearTimeout(config.timeoutWarning);
+        if (warningDisplayed && warningMessage) {
+            warningMessage();
+            warningDisplayed = false;
+        }
         return response;
     },
-    (error) => {
+    (error: AxiosError) => {
+        const config = error.config as CustomInternalAxiosRequestConfig;
+        if (config?.timeoutWarning) {
+            clearTimeout(config.timeoutWarning);
+            if (warningDisplayed && warningMessage) {
+                warningMessage();
+                warningDisplayed = false;
+            }
+        }
+
         if (error.response) {
-            if (error.response.status === 401 && error.response.data.error === "Token has expired, please log in again") {
-                console.error('Unauthorized - Token expired');
-                message.error(error.response.data.error, 4);
+            const responseData = error.response.data as { error: string };
+            if (error.response.status === 401 && responseData.error === "Token has expired, please log in again") {
+                message.error(responseData.error, 4);
                 setTimeout(() => {
                     localStorage.clear();
                     window.location.href = '/auth';
@@ -47,6 +73,5 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(error);
     }
 );
-
 
 export default axiosInstance;
