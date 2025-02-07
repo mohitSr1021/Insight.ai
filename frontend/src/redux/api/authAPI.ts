@@ -47,3 +47,25 @@ export const authLogin = createAsyncThunk(
         }
     }
 );
+
+// Logout api thunk
+export const authLogout = createAsyncThunk(
+    'auth/logout',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post("/auth/logout");
+            return response.data;
+        } catch (error) {
+            if ((error as any).response) {
+                if (axios.isAxiosError(error) && error.response) {
+                    return rejectWithValue(error.response.data);
+                } else {
+                    return rejectWithValue({ message: "Network error, please try again." });
+                }
+            } else {
+                return rejectWithValue({ message: "Network error, please try again." });
+            }
+        }
+    }
+);
+
