@@ -1,17 +1,31 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Input, Form, message } from 'antd';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { authLogin, authSignup } from '../../redux/api/authAPI';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/store/rootStore';
 import { AuthFormValues } from './auth.types';
+import PopupBox from '../../components/Popup/PopupBox';
 
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [showPopup, setShowPopup] = useState<boolean>(false);
   const { isLoading, error } = useAppSelector((state) => state.auth) as { isLoading: boolean; error: { message: string } | string | null };
+
+  useEffect(() => {
+    const isFirstVisit = sessionStorage.getItem('firstVisit');
+    if (!isFirstVisit) {
+      setShowPopup(true);
+      sessionStorage.setItem('firstVisit', 'true');
+    }
+  }, []);
+
+  const closePopup = () => {
+    setShowPopup(false);
+  };
 
   // Password validation for signup
   const validatePassword = ({ getFieldValue }: { getFieldValue: (field: string) => string }) => ({
@@ -38,6 +52,12 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 flex items-center justify-center p-4">
+      <PopupBox
+        show={showPopup}
+        onClose={closePopup}
+        title="Welcome to My Project"
+        content="This is an ongoing project focused on learning and development. Some features may be under construction."
+      />
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-xl">
         {/* Logo */}
         <div className="text-center">
