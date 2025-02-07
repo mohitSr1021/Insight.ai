@@ -44,7 +44,7 @@ export const updateExistingNote = createAsyncThunk(
   ) => {
     try {
       const response = await axiosInstance.put(
-        `/update/${noteData.noteId}`,
+        `/notes/update/${noteData.noteId}`,
         noteData
       );
       return response.data;
@@ -70,6 +70,31 @@ export const deleteExistingNote = createAsyncThunk(
         return rejectWithValue(error.response.data);
       } else {
         return rejectWithValue({ message: "Network error, please try again." });
+      }
+    }
+  }
+);
+
+// Adding/Removing Favorite
+export const toggleNoteFavorite = createAsyncThunk(
+  "notes/toggleFavorite",
+  async (
+    { noteId, userId }: { noteId: string; userId: string },
+    { rejectWithValue }: { rejectWithValue: any }
+  ) => {
+    try {
+      const response = await axiosInstance.post("/notes/favorite", {
+        noteId,
+        userId,
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return rejectWithValue(
+          error.response.data || "Failed to toggle favorite"
+        );
+      } else {
+        return rejectWithValue(error.response?.data);
       }
     }
   }

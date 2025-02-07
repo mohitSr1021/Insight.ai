@@ -18,6 +18,7 @@ const Home: React.FC = () => {
   const selectedNote = useAppSelector(selectSelectedNote)
   const isEditModalOpen = useAppSelector(selectIsEditModalOpen)
   const { current } = useLayoutStatus()
+  const processingMessage = useAppSelector((state)=>state.notes.pMsg)
 
   useEffect(() => {
     const fetchUserNotes = async () => {
@@ -44,8 +45,9 @@ const Home: React.FC = () => {
         <Sidebar />
         <main className={`${current === "lg" ? "h-[calc(100vh-22vh)]":"h-[calc(100vh-45vh)]"} overflow-auto flex-1 p-6`}>
           {isLoading ? (
-            <div className="flex justify-center items-center h-full">
+            <div className="flex flex-col justify-center items-center h-full">
               <Spinner size="large" />
+              <p className="my-2 animate-pulse">{processingMessage}</p>
             </div>
           ) : notes && notes.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">

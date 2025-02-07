@@ -9,6 +9,7 @@ const initialState: NotesState = {
   selectedNote: null,
   isEditModalOpen: false,
   sortOrder: "desc",
+  pMsg: null
 };
 
 const notesSlice = createSlice({
@@ -74,16 +75,19 @@ const notesSlice = createSlice({
       .addCase(updateExistingNote.pending, (state) => {
         state.isLoading = true;
         state.error = null;
+        state.pMsg = "Processing your note update..."
       })
       .addCase(updateExistingNote.fulfilled, (state, action) => {
         state.isLoading = false;
-        const index = state.notes.findIndex((note) => note._id === action.payload._id);
+        localStorage.setItem("bhai", JSON.stringify(action.payload))
+        const index = state.notes.findIndex((note) => note._id === action.payload.note._id);
         if (index !== -1) {
-          state.notes[index] = action.payload;
+          state.notes[index] = action.payload.note;
         }
         state.selectedNote = null;
         state.isEditModalOpen = false;
         state.error = null;
+        state.pMsg = null
       })
       .addCase(updateExistingNote.rejected, (state, action) => {
         state.isLoading = false;
@@ -101,7 +105,10 @@ const notesSlice = createSlice({
       .addCase(deleteExistingNote.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.error.message || "Failed to delete note";
-      });
+      })
+    // .addCase(fetchFavoriteNotes.fulfilled, (state, action) => {
+    //   state.favNotes = action.payload.map((note: any) => note._id);
+    // });
   },
 });
 

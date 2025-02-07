@@ -1,9 +1,10 @@
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useAppSelector } from "../../redux/store/rootStore"
+import { useAppDispatch, useAppSelector } from "../../redux/store/rootStore"
 // import { updateExistingNote } from "../../redux/api/noteAPI"
 import { X, Save } from "lucide-react"
-import Spinner from "../Spinner/Spinner"
+import { updateExistingNote } from "../../redux/api/noteAPI"
+import { message } from "antd"
 
 interface Note {
     _id: string
@@ -22,9 +23,9 @@ interface EditNoteModalProps {
 }
 
 const EditNoteModal: React.FC<EditNoteModalProps> = ({ isOpen, onClose, note }) => {
+    const dispatch = useAppDispatch()
     const [title, setTitle] = useState(note.title)
     const [content, setContent] = useState(note.content)
-    // const dispatch = useAppDispatch()
     const isLoading = useAppSelector((state) => state.notes.isLoading)
 
     useEffect(() => {
@@ -32,17 +33,32 @@ const EditNoteModal: React.FC<EditNoteModalProps> = ({ isOpen, onClose, note }) 
         setContent(note.content)
     }, [note])
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        // dispatch(updateExistingNote({ noteId: note._id, title, content, link: note.link }))
-        onClose()
-    }
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const response = await dispatch(updateExistingNote({ noteId: note._id, title, content, link: note.link })).unwrap();
+
+            if (response.success) {
+                message.success(response.message || "Your note has been updated successfully!");
+                onClose();
+            } else {
+                throw new Error(response.message || "Failed to update your note.");
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                message.error(error.message || "Failed to update your note. Please try again.");
+            } else {
+                message.error("Failed to update your note. Please try again.");
+            }
+            console.error("Error updating note:", error);
+        }
+    };
 
     if (!isOpen) return null
 
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div 
+            <div
                 className="bg-white/95 rounded-3xl shadow-2xl w-full max-w-2xl border border-gray-200/70 transform transition-all duration-300 scale-100"
                 onClick={(e) => e.stopPropagation()}
             >
@@ -59,18 +75,20 @@ const EditNoteModal: React.FC<EditNoteModalProps> = ({ isOpen, onClose, note }) 
                 <form onSubmit={handleSubmit} className="p-8 space-y-6">
                     <div>
                         <label htmlFor="title" className="block text-sm font-semibold text-gray-700 mb-2">
-                            Title
+                            Title * <span className="text-gray-500 text-xs">(Title will automatically generate based on your note)</span>
                         </label>
                         <input
                             type="text"
                             id="title"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50"
+                            className={`w-full px-4 py-3 border rounded-2xl transition-all duration-200 bg-white/50 
+                                ${isLoading ? "opacity-50 cursor-not-allowed border-gray-300 bg-gray-100" : "border-gray-300 focus:ring-2 focus:ring-transparent focus:border-transparent"}
+                            `}
+                            disabled={isLoading}
                             required
                         />
                     </div>
-
                     <div>
                         <label htmlFor="content" className="block text-sm font-semibold text-gray-700 mb-2">
                             Content
@@ -80,7 +98,10 @@ const EditNoteModal: React.FC<EditNoteModalProps> = ({ isOpen, onClose, note }) 
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
                             rows={8}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 resize-none"
+                            className={`w-full px-4 py-3 border rounded-2xl transition-all duration-200 bg-white/50 
+                                ${isLoading ? "opacity-50 cursor-not-allowed border-gray-300 bg-gray-100" : "border-gray-300 focus:ring-2 focus:ring-transparent focus:border-transparent"}
+                            `}
+                            disabled={isLoading}
                             required
                         />
                     </div>
@@ -101,7 +122,6 @@ const EditNoteModal: React.FC<EditNoteModalProps> = ({ isOpen, onClose, note }) 
                         >
                             {isLoading ? (
                                 <>
-                                    <Spinner size="small" />
                                     <span>Saving...</span>
                                 </>
                             ) : (

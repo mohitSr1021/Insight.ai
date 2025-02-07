@@ -2,6 +2,7 @@ export interface Note {
   _id: string;
   title: string;
   content: string;
+  isFavourite: boolean;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -11,6 +12,7 @@ export interface Note {
 export interface NotesState {
   notes: Note[];
   isLoading: boolean;
+  pMsg: string | null;
   error: string | null;
   selectedNote: Note | null;
   isEditModalOpen: boolean;
