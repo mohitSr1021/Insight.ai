@@ -2,6 +2,7 @@ export interface Note {
   _id: string;
   title: string;
   content: string;
+  link?: string;
   isFavourite: boolean;
   userId: string;
   createdAt: string;

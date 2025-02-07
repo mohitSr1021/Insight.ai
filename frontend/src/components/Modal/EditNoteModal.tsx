@@ -10,6 +10,7 @@ interface Note {
     _id: string
     title: string
     content: string
+    link?: string
     userId: string
     createdAt: string
     updatedAt: string
@@ -36,7 +37,7 @@ const EditNoteModal: React.FC<EditNoteModalProps> = ({ isOpen, onClose, note }) 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await dispatch(updateExistingNote({ noteId: note._id, title, content, link: note.link })).unwrap();
+            const response = await dispatch(updateExistingNote({ noteId: note._id, title, content, link: note.link ? note.link : "" })).unwrap();
 
             if (response.success) {
                 message.success(response.message || "Your note has been updated successfully!");

@@ -53,7 +53,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
       setIsFavorite(result.isFavorite);
       message.success(result.message);
     } catch (error) {
-      message.error(error?.message || "An unexpected error occurred while toggling favorites");
+      message.error((error as any)?.message || "An unexpected error occurred while toggling favorites");
       console.error("Favorite toggle error:", error);
     } finally {
       setIsLoading(false);

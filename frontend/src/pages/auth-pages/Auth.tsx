@@ -25,18 +25,16 @@ const Auth = () => {
 
 
   const onSubmit = async (values: AuthFormValues) => {
-    const authData = Object.fromEntries(
-      Object.entries(values).filter(([key]) => key !== "confirmPassword")
-    );
-    const actionThunk = isLogin ? authLogin : authSignup;
     try {
-      await dispatch(actionThunk(authData)).unwrap();
+      const actionThunk = isLogin ? authLogin(values) : authSignup(values);
+      await dispatch(actionThunk).unwrap();
       message.success(`Successfully ${isLogin ? "logged in" : "signed up"}!`);
       navigate("/home");
     } catch (error: any) {
       message.error(error?.message || `Failed to ${isLogin ? "login" : "sign up"}`);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 flex items-center justify-center p-4">

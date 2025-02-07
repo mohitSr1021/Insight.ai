@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { fetchNotes, createNewNote, updateExistingNote, deleteExistingNote } from "../../api/noteAPI";
-import { NotesState } from "./noteSlice.types";
+import { Note, NotesState } from "./noteSlice.types";
 
 const initialState: NotesState = {
   notes: [],
@@ -48,7 +48,7 @@ const notesSlice = createSlice({
       })
       .addCase(fetchNotes.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.notes = action.payload.notes.sort((a, b) =>
+        state.notes = action.payload.notes.sort((a: Note, b: Note) =>
           state.sortOrder === "asc"
             ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
             : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
