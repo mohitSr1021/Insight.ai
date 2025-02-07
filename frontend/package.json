@@ -12,6 +12,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.5.1",
     "@tailwindcss/vite": "^4.0.3",
+    "@vercel/analytics": "^1.4.1",
     "antd": "^5.23.3",
     "autoprefixer": "^10.4.20",
     "axios": "^1.7.9",
