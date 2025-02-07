@@ -41,9 +41,8 @@ const Favourites = () => {
       <Header />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className={`${current === 'lg' ? 'h-[calc(100vh-22vh)]' : 'h-[calc(100vh-45vh)]'} overflow-auto flex-1 p-8`}>
+        <main className={`${current === 'lg' ? 'h-[calc(100vh-22vh)]' : 'h-[calc(100vh-22vh)]'} overflow-auto flex-1 p-8`}>
           <h1 className="text-3xl font-bold mb-6 text-center text-gray-400">⭐ Favourite Notes</h1>
-          
           {isLoading ? (
             <div className="flex justify-center items-center h-full">
               <Spinner size="large" />
@@ -81,7 +80,7 @@ const Favourites = () => {
           )}
         </main>
       </div>
-      <NoteComposer />
+      {/* <NoteComposer /> */}
     </div>
   );
 };
