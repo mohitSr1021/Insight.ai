@@ -7,6 +7,7 @@ import { ProtectedRoute } from "./routes-protect/ProtectedRoute.tsx";
 const AuthPage = lazy(() => import("../pages/auth-pages/Auth.tsx"));
 const Favourites = lazy(() => import("../pages/protected-pages/Favourites.tsx"));
 const Home = lazy(() => import("../pages/protected-pages/Home/Home.tsx"));
+const About = lazy(() => import("../pages/protected-pages/About/About.tsx"));
 
 const routes: RouteObject[] = [
     {
@@ -48,19 +49,23 @@ const routes: RouteObject[] = [
     },
     {
         path: "/favourites",
-        element: <Favourites />,
-        children: [
-            {
-                path: "",
-                element: (
-                    <ProtectedRoute>
-                        <SuspenseWrapper>
-                            <Favourites />
-                        </SuspenseWrapper>
-                    </ProtectedRoute>
-                ),
-            },
-        ],
+        element: (
+            <ProtectedRoute>
+                <SuspenseWrapper>
+                    <Favourites />
+                </SuspenseWrapper>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/about",
+        element: (
+            <ProtectedRoute>
+                <SuspenseWrapper>
+                    <About />
+                </SuspenseWrapper>
+            </ProtectedRoute>
+        ),
     },
 ];
 
