@@ -1,6 +1,6 @@
 import Header from '../../layout/Header';
 import Sidebar from '../../layout/Sidebar';
-import NoteComposer from '../../components/composer/NoteComposer';
+// import NoteComposer from '../../components/composer/NoteComposer';
 import { useEffect } from 'react';
 import { fetchNotes } from '../../redux/api/noteAPI';
 import { useAppDispatch, useAppSelector } from '../../redux/store/rootStore';
