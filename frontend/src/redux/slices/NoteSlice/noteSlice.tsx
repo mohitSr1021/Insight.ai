@@ -21,6 +21,9 @@ const notesSlice = createSlice({
       state.error = null;
     },
     resetNotesState: () => initialState,
+    resetfilteredNotesState: (state) => {
+      state.filteredNotes = []
+    },
     openEditModal: (state, action: PayloadAction<string>) => {
       const note = state.notes.find((n) => n._id === action.payload);
       if (note) {
@@ -129,7 +132,7 @@ const notesSlice = createSlice({
 export const selectNotesToDisplay = (state: { notes: NotesState }) =>
   state.notes.filteredNotes.length === 0 || state.notes.filteredNotes.length < 0 ? state.notes.notes : state.notes.filteredNotes;
 
-export const { clearError, resetNotesState, openEditModal, closeEditModal, toggleSortOrder, searchNotes } = notesSlice.actions;
+export const { clearError, resetNotesState, resetfilteredNotesState, openEditModal, closeEditModal, toggleSortOrder, searchNotes } = notesSlice.actions;
 
 export const selectAllNotes = (state: { notes: NotesState }) => state.notes.notes;
 export const selectIsLoading = (state: { notes: NotesState }) => state.notes.isLoading;

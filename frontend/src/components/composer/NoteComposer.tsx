@@ -6,7 +6,7 @@ import { RootState, useAppDispatch, useAppSelector } from "../../redux/store/roo
 import useLayoutStatus from "../../Hooks/useLayoutStatus"
 import { NoteComposerProps } from "./NoteComposer.types"
 import { createNewNote } from "../../redux/api/noteAPI"
-
+import { resetfilteredNotesState } from "../../redux/slices/NoteSlice/noteSlice"
 
 
 export default function NoteComposer({ onSave }: NoteComposerProps) {
@@ -92,6 +92,7 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
         ...(url.trim() && { link: url.trim() }), // if its present then include
       };
 
+      dispatch(resetfilteredNotesState())
       // Dispatch the createNewNote API
       dispatch(createNewNote(noteData))
         .then((noteData) => {

@@ -3,7 +3,7 @@ import { Search, FilterIcon, X } from "lucide-react";
 import SortButton from "../components/Buttons/SortButton";
 import useLayoutStatus from "../Hooks/useLayoutStatus";
 import { useAppDispatch, useAppSelector } from "../redux/store/rootStore";
-import { searchNotes, selectSortOrder, toggleSortOrder } from "../redux/slices/NoteSlice/noteSlice";
+import { resetfilteredNotesState, resetNotesState, searchNotes, selectSortOrder, toggleSortOrder } from "../redux/slices/NoteSlice/noteSlice";
 import { Tooltip } from "antd";
 import useDebounce from "../Hooks/useDebounce.ts";
 
@@ -53,7 +53,10 @@ const Header = () => {
             {searchTerm && (
               <X
                 className="w-6 h-6 opacity-45 cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-75"
-                onClick={() => setSearchTerm("")} // Clear input on click
+                onClick={() => {
+                  setSearchTerm("");
+                  dispatch(resetfilteredNotesState())
+                }} // Clear input on click
               />
             )}
           </div>
