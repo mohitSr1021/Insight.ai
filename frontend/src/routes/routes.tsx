@@ -9,6 +9,7 @@ const Favourites = lazy(() => import("../pages/protected-pages/Favourites.tsx"))
 const Home = lazy(() => import("../pages/protected-pages/Home/Home.tsx"));
 const About = lazy(() => import("../pages/protected-pages/About/About.tsx"));
 const Profile = lazy(() => import("../pages/protected-pages/Profile/Profile.tsx"));
+const NotFound = lazy(() => import("../pages/protected-pages/NoteFound/NoteFound.tsx"));
 
 const routes: RouteObject[] = [
     {
@@ -78,6 +79,17 @@ const routes: RouteObject[] = [
             </ProtectedRoute>
         ),
     },
+    {
+        path: "*",
+        element: (
+            <ProtectedRoute>
+                <SuspenseWrapper>
+                    <NotFound />
+                </SuspenseWrapper>
+            </ProtectedRoute>
+        ),
+    },
+   
 ];
 
 export const AuthRouter = createBrowserRouter(routes);
