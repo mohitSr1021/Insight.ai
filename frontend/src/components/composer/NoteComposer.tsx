@@ -8,9 +8,9 @@ import { NoteComposerProps } from "./NoteComposer.types"
 import { createNewNote } from "../../redux/api/noteAPI"
 import { resetfilteredNotesState } from "../../redux/slices/NoteSlice/noteSlice"
 
-
 export default function NoteComposer({ onSave }: NoteComposerProps) {
   const [url, setUrl] = useState("")
+  const [urlError, setUrlError] = useState("")
   const [noteContent, setNoteContent] = useState("")
   const [recordingTime, setRecordingTime] = useState(0)
   const [image, setImage] = useState<File | null>(null)
@@ -39,6 +39,11 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
       }
     }
   }, [isRecording])
+
+  const validateUrl = (url: string): boolean => {
+    if (!url.trim()) return true
+    return url.trim().startsWith('https://') || url.trim().startsWith('http://')
+  }
 
   const startRecording = async () => {
     try {
@@ -87,32 +92,48 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
 
   const handleSave = () => {
     if (noteContent.trim() || url.trim() || image) {
+      if (!validateUrl(url)) {
+        setUrlError("Please enter a valid URL starting with http:// or https://")
+        return
+      }
+
       const noteData = {
         content: noteContent.trim(),
-        ...(url.trim() && { link: url.trim() }), // if its present then include
-      };
+        ...(url.trim() && { link: url.trim() }),
+      }
 
       dispatch(resetfilteredNotesState())
-      // Dispatch the createNewNote API
       dispatch(createNewNote(noteData))
         .then((noteData) => {
-          setNoteContent('');
-          setUrl('');
-          setImage(null);
-          setShowUrlInput(false);
-          message.success(noteData.payload.message);
+          setNoteContent('')
+          setUrl('')
+          setUrlError('')
+          setImage(null)
+          setShowUrlInput(false)
+          message.success(noteData.payload.message)
         })
         .catch((error) => {
-          message.error(error?.message || 'Failed to save note');
-        });
+          message.error(error?.message || 'Failed to save note')
+        })
     } else {
-      message.warning('Please add some content before saving');
+      message.warning('Please add some content before saving')
     }
-  };
+  }
 
   const handleClearUrl = () => {
     setUrl("")
+    setUrlError("")
     setShowUrlInput(false)
+  }
+
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUrl = e.target.value
+    setUrl(newUrl)
+    if (newUrl && !validateUrl(newUrl)) {
+      setUrlError("Please enter a valid URL starting with http:// or https://")
+    } else {
+      setUrlError("")
+    }
   }
 
   const handleClearImage = () => {
@@ -126,7 +147,6 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
           <Tooltip title="user">
             <Avatar className="cursor-pointer">{authUser?.user?.userName[0].toUpperCase()}</Avatar>
           </Tooltip>
-
           <Input.TextArea
             className="flex-1 w-full !min-w-72"
             placeholder="Write a note..."
@@ -136,26 +156,34 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
             disabled={isRecording || isLoading}
           />
         </div>
-
-        {/* show URL input*/}
         {showUrlInput && (
-          <div className="flex items-center gap-2 w-full">
-            <Input
-              placeholder="Enter URL..."
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              disabled={isRecording}
-            />
-            <Button
-              type="text"
-              icon={<X size={16} />}
-              onClick={handleClearUrl}
-              className="text-gray-400 hover:text-gray-600"
-            />
+          <div className="flex flex-col w-full relative">
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Enter URL..."
+                value={url}
+                onChange={handleUrlChange}
+                status={urlError ? "error" : ""}
+                disabled={isRecording}
+              />
+              <Button
+                type="text"
+                icon={<X size={16} />}
+                onClick={handleClearUrl}
+                className="text-gray-400 hover:text-gray-600"
+              />
+            </div>
+            {urlError && (
+              <div
+                title={urlError}
+                className="text-red-500 absolute top-[-30px] left-0 !text-[11px] text-nowrap mt-1"
+              >
+                {urlError}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Show image attachment information */}
         {image && (
           <div className="flex items-center gap-2 mb-2 w-full">
             <span className="text-sm text-gray-600">{image.name}</span>
@@ -191,7 +219,7 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button onClick={handleSave} disabled={isRecording || isLoading || (!noteContent.trim() && !url.trim() && !image)}>
+            <Button onClick={handleSave} disabled={isRecording || isLoading || Boolean(urlError) || (!noteContent.trim() && !url.trim() && !image)}>
               Save
             </Button>
 

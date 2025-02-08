@@ -1,9 +1,7 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import { useAppDispatch, useAppSelector } from "../../redux/store/rootStore"
-import {
-  openEditModal,
-} from "../../redux/slices/NoteSlice/noteSlice"
+import { openEditModal, } from "../../redux/slices/NoteSlice/noteSlice"
 import {
   Edit2,
   MoreVertical,
@@ -60,27 +58,24 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
     }
   };
 
-
   return (
-    <div className="group relative bg-white min-h-[280px] rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-gray-100 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
-
+    <div className="group relative hover:opacity-60 bg-white min-h-[280px] rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-gray-100 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none" />
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-      <div className="p-6 flex flex-col h-full">
+      <div className="p-6 flex flex-col h-full relative">
         <div className="flex justify-between items-start mb-4">
-          <h3 className="font-bold text-xl text-gray-900 tracking-tight line-clamp-2 flex-grow pr-8">
+          <h3 className="font-bold text-xl text-gray-900 tracking-tight line-clamp-2 flex-grow pr-8 select-text">
             {note.title}
           </h3>
           <div className="relative flex items-center gap-1">
             <button
               onClick={() => handleFavoriteToggle(note?._id, userId)}
               disabled={IsLoading}
-              className={`p-2 rounded-full transition-colors ${IsLoading ? "cursor-not-allowed opacity-50" : "hover:bg-gray-100"
+              className={`p-2 rounded-full transition-colors ${IsLoading ? "opacity-50" : "hover:bg-gray-100"
                 }`}
             >
               {IsLoading ? (
-                <Loader2 size={18} className="animate-spin text-gray-500" /> 
+                <Loader2 size={18} className="animate-spin text-gray-500" />
               ) : (
                 <Star
                   size={18}
@@ -88,7 +83,6 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
                 />
               )}
             </button>
-
 
             <button
               onClick={() => {
@@ -138,18 +132,21 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
           </div>
         </div>
 
-        <p className="text-gray-600 flex-grow line-clamp-3">{note.content}</p>
+        <p className="text-gray-600 flex-grow line-clamp-3 select-text">{note.content}</p>
 
         {note.link && (
           <a
-            href={note.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center text-sm text-blue-600 hover:text-blue-700 py-2 group/link"
+            href={`${note.link.startsWith("http://") || note.link.startsWith("https://")
+                ? note.link
+                : `https://${note.link}`
+              }`}
+
+            target="_Blank"
+            className="flex items-center text-sm text-blue-600 hover:text-blue-700 py-2 group/link z-10"
           >
             <LinkIcon size={14} className="mr-1.5" />
             <span className="truncate flex-grow">{note.link}</span>
-            <ExternalLink size={12} className="ml-1 opacity-0 group-hover/link:opacity-100 transition-opacity" />
+            <ExternalLink size={12} className="ml-1 group-hover/link:opacity-100 transition-opacity" />
           </a>
         )}
 
