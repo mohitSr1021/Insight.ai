@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Star, MenuIcon, X, LogOut, User } from "lucide-react";
+import { Home, Star, MenuIcon, X, LogOut, User, GraduationCap } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { authLogout } from "../redux/api/authAPI";
 import useLayoutStatus from "../Hooks/useLayoutStatus";
@@ -70,7 +70,7 @@ const Sidebar = () => {
                 className={`z-40
                     ${isMobileOrTablet
                         ? "fixed top-0 left-0 transition-transform duration-300 ease-in-out transform"
-                        : "relative"
+                        : `${location.pathname === "/profile" ? "h-dvh relative !rounded-none" : "relative"}`
                     }
                     ${isMobileOrTablet && !isOpen
                         ? "-translate-x-full"
@@ -112,8 +112,18 @@ const Sidebar = () => {
                                 }`
                             }
                         >
-                            <User size={18} />
+                            <GraduationCap size={18} />
                             <span>About me</span>
+                        </NavLink>
+                        <NavLink
+                            to="/profile"
+                            className={({ isActive }) =>
+                                `flex items-center space-x-3 p-3 rounded-lg transition-colors ${isActive ? "bg-gray-200" : "hover:bg-gray-200"
+                                }`
+                            }
+                        >
+                            <User size={18} />
+                            <span>User Profile</span>
                         </NavLink>
                     </nav>
                 </div>

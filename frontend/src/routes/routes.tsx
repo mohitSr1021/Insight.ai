@@ -8,6 +8,7 @@ const AuthPage = lazy(() => import("../pages/auth-pages/Auth.tsx"));
 const Favourites = lazy(() => import("../pages/protected-pages/Favourites.tsx"));
 const Home = lazy(() => import("../pages/protected-pages/Home/Home.tsx"));
 const About = lazy(() => import("../pages/protected-pages/About/About.tsx"));
+const Profile = lazy(() => import("../pages/protected-pages/Profile/Profile.tsx"));
 
 const routes: RouteObject[] = [
     {
@@ -63,6 +64,16 @@ const routes: RouteObject[] = [
             <ProtectedRoute>
                 <SuspenseWrapper>
                     <About />
+                </SuspenseWrapper>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/Profile",
+        element: (
+            <ProtectedRoute>
+                <SuspenseWrapper>
+                    <Profile />
                 </SuspenseWrapper>
             </ProtectedRoute>
         ),

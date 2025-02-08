@@ -17,7 +17,7 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
   const [isRecording, setIsRecording] = useState(false)
   const [showUrlInput, setShowUrlInput] = useState(false)
 
-  const timerRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const timerRef = useRef<number | undefined>(undefined)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])

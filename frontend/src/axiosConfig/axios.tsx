@@ -1,8 +1,10 @@
 import { message } from 'antd';
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
+type TimeoutId = ReturnType<typeof setTimeout>;
+
 interface CustomInternalAxiosRequestConfig extends InternalAxiosRequestConfig {
-    timeoutWarning?: NodeJS.Timeout;
+    timeoutWarning?: TimeoutId;
 }
 
 const axiosInstance = axios.create({
@@ -37,7 +39,9 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
     (response: AxiosResponse) => {
         const config = response.config as CustomInternalAxiosRequestConfig;
-        clearTimeout(config.timeoutWarning);
+        if (config.timeoutWarning) {
+            clearTimeout(config.timeoutWarning);
+        }
         if (warningDisplayed && warningMessage) {
             warningMessage();
             warningDisplayed = false;
