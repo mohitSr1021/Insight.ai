@@ -1,5 +1,5 @@
 import Sidebar from "../../../layout/Sidebar";
-import { Settings, Mail, Calendar } from "lucide-react";
+import { Mail, Calendar } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../../redux/store/rootStore";
 import { useEffect, useState } from "react";
 import { fetchUserProfile } from "../../../redux/api/authAPI";
@@ -26,7 +26,7 @@ const Profile = () => {
         });
     };
 
-    console.log("user?.createdAt?.$date➡️➡️➡️",user?.createdAt)
+    // console.log("user?.createdAt?.$date➡️➡️➡️",user?.createdAt)
 
     return (
         <div className="flex flex-1 overflow-hidden">
@@ -93,12 +93,12 @@ const Profile = () => {
                                             </div>
                                         </div>
 
-                                        <div className="pt-4 flex space-x-4">
+                                        {/* <div className="pt-4 flex space-x-4">
                                             <button className="flex-1 bg-violet-600 hover:bg-violet-700 text-white py-2 px-4 rounded-lg shadow transition-colors duration-200 flex items-center justify-center space-x-2">
                                                 <Settings className="w-4 h-4" />
                                                 <span>Edit Profile</span>
                                             </button>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                             </div>
