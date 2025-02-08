@@ -38,7 +38,17 @@ export const authLogin = createAsyncThunk(
     }
   }
 );
-
+export const fetchUserProfile = createAsyncThunk(
+  "auth/User",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`/auth/users/u`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(handleError(error));
+    }
+  }
+);
 // Logout api thunk
 export const authLogout = createAsyncThunk(
   "auth/logout",

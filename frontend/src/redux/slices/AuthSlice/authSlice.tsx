@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { authLogin, authSignup } from '../../api/authAPI';
+import { authLogin, authSignup, fetchUserProfile } from '../../api/authAPI';
 
 const initialState = {
     user: localStorage.getItem('userDetails') ? JSON.parse(localStorage.getItem('userDetails') || "") : null,
@@ -61,6 +61,19 @@ const authSlice = createSlice({
         builder.addCase(authLogin.rejected, (state, action) => {
             state.isLoading = false;
             state.error = action.payload || 'Login failed';
+        });
+        builder.addCase(fetchUserProfile.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
+        });
+        builder.addCase(fetchUserProfile.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.user = action.payload; // Update user data
+            localStorage.setItem("userDetails", JSON.stringify(action.payload));
+        });
+        builder.addCase(fetchUserProfile.rejected, (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload || "Failed to fetch user profile";
         });
     },
 });

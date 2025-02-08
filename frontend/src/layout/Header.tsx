@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { Search, FilterIcon, X } from "lucide-react";
 import SortButton from "../components/Buttons/SortButton";
 import useLayoutStatus from "../Hooks/useLayoutStatus";
@@ -15,7 +15,7 @@ const Header = () => {
   const sortOrder = useAppSelector(selectSortOrder);
   const debouncedValue = useDebounce(searchTerm, 0)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     dispatch(searchNotes(debouncedValue));
   }, [debouncedValue, dispatch]);
 

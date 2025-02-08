@@ -1,7 +1,7 @@
 import type React from "react"
 import { useEffect, } from "react"
 import { useAppDispatch, useAppSelector } from "../../../redux/store/rootStore"
-import { closeEditModal, selectNotesToDisplay, selectIsEditModalOpen, selectIsLoading, selectSelectedNote, } from "../../../redux/slices/NoteSlice/noteSlice"
+import { closeEditModal, selectNotesToDisplay, selectIsEditModalOpen, selectIsLoading, selectSelectedNote, resetfilteredNotesState, } from "../../../redux/slices/NoteSlice/noteSlice"
 import { fetchNotes } from "../../../redux/api/noteAPI"
 import Header from "../../../layout/Header"
 import Sidebar from "../../../layout/Sidebar"
@@ -19,6 +19,11 @@ const Home: React.FC = () => {
   const isEditModalOpen = useAppSelector(selectIsEditModalOpen)
   const { current } = useLayoutStatus()
   const processingMessage = useAppSelector((state) => state.notes.pMsg)
+
+  useEffect(() => {
+    dispatch(resetfilteredNotesState())
+  }, [dispatch])
+
 
   useEffect(() => {
     const fetchUserNotes = async () => {

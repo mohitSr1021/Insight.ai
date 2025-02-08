@@ -164,13 +164,14 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
                 value={url}
                 onChange={handleUrlChange}
                 status={urlError ? "error" : ""}
-                disabled={isRecording}
+                disabled={isRecording || isLoading}
               />
               <Button
                 type="text"
                 icon={<X size={16} />}
                 onClick={handleClearUrl}
                 className="text-gray-400 hover:text-gray-600"
+                disabled={isLoading}
               />
             </div>
             {urlError && (
@@ -192,6 +193,7 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
               icon={<X size={16} />}
               onClick={handleClearImage}
               className="text-gray-400 hover:text-gray-600"
+              disabled={isLoading}
             />
           </div>
         )}
@@ -204,16 +206,17 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
                 type="text"
                 icon={<ImageIcon className="text-gray-600" size={20} />}
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isRecording}
+                disabled={isRecording || isLoading}
               />
             </Tooltip>
 
             <Tooltip title="Add URL">
               <Button
                 type="text"
+                className={`${isLoading ? "!cursor-not-allowed !bg-slate-100" : ""}`}
                 icon={<Link2 className="text-gray-600" size={20} />}
                 onClick={() => setShowUrlInput(true)}
-                disabled={isRecording || showUrlInput}
+                disabled={isLoading || isRecording || showUrlInput}
               />
             </Tooltip>
           </div>
