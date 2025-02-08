@@ -4,8 +4,9 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { authLogout } from "../redux/api/authAPI";
 import useLayoutStatus from "../Hooks/useLayoutStatus";
 import { useAppDispatch } from "../redux/store/rootStore";
-import { logout } from "../redux/slices/AuthSlice/authSlice";
+import { logout } from "../redux/slices/AuthSlice/authSlice.tsx";
 import { message } from "antd";
+import { resetNotesState } from "../redux/slices/NoteSlice/noteSlice.tsx";
 
 const Sidebar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -44,6 +45,7 @@ const Sidebar = () => {
                 hideLoading();
                 message.success(response.message || "Logged out successfully!");
                 dispatch(logout());
+                dispatch(resetNotesState())
                 navigate("/auth");
             })
             .catch((error) => {
