@@ -1,7 +1,7 @@
 import type React from "react"
 import { useEffect, } from "react"
 import { useAppDispatch, useAppSelector } from "../../../redux/store/rootStore"
-import { closeEditModal, selectAllNotes, selectIsEditModalOpen, selectIsLoading, selectSelectedNote, } from "../../../redux/slices/NoteSlice/noteSlice"
+import { closeEditModal, selectNotesToDisplay, selectIsEditModalOpen, selectIsLoading, selectSelectedNote, } from "../../../redux/slices/NoteSlice/noteSlice"
 import { fetchNotes } from "../../../redux/api/noteAPI"
 import Header from "../../../layout/Header"
 import Sidebar from "../../../layout/Sidebar"
@@ -13,12 +13,12 @@ import useLayoutStatus from "../../../Hooks/useLayoutStatus"
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch()
-  const notes = useAppSelector(selectAllNotes)
+  const notes = useAppSelector(selectNotesToDisplay);
   const isLoading = useAppSelector(selectIsLoading)
   const selectedNote = useAppSelector(selectSelectedNote)
   const isEditModalOpen = useAppSelector(selectIsEditModalOpen)
   const { current } = useLayoutStatus()
-  const processingMessage = useAppSelector((state)=>state.notes.pMsg)
+  const processingMessage = useAppSelector((state) => state.notes.pMsg)
 
   useEffect(() => {
     const fetchUserNotes = async () => {
@@ -43,7 +43,7 @@ const Home: React.FC = () => {
       <Header />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className={`${current === "lg" ? "h-[calc(100vh-22vh)]":"h-[calc(100vh-45vh)]"} overflow-auto flex-1 p-6`}>
+        <main className={`${current === "lg" ? "h-[calc(100vh-22vh)]" : "h-[calc(100vh-21vh)]"} overflow-auto flex-1 p-6`}>
           {isLoading ? (
             <div className="flex flex-col justify-center items-center h-full">
               <Spinner size="large" />

@@ -12,6 +12,7 @@ export interface Note {
 
 export interface NotesState {
   notes: Note[];
+  filteredNotes: Note[];
   isLoading: boolean;
   pMsg: string | null;
   error: string | null;

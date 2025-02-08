@@ -4,6 +4,7 @@ import { Note, NotesState } from "./noteSlice.types";
 
 const initialState: NotesState = {
   notes: [],
+  filteredNotes: [],
   isLoading: false,
   error: null,
   selectedNote: null,
@@ -38,6 +39,19 @@ const notesSlice = createSlice({
           ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
+    },
+    searchNotes: (state, action: PayloadAction<string>) => {
+      if (!action.payload.trim()) {
+        state.filteredNotes = state.notes;
+      } else {
+        const searchTerm = action.payload.toLowerCase();
+        state.filteredNotes = state.notes.filter((note) => {
+          return (
+            note.title?.toLowerCase().includes(searchTerm) ||
+            note.content?.toLowerCase().includes(searchTerm)
+          );
+        });
+      }
     },
   },
   extraReducers: (builder) => {
@@ -112,7 +126,10 @@ const notesSlice = createSlice({
   },
 });
 
-export const { clearError, resetNotesState, openEditModal, closeEditModal, toggleSortOrder } = notesSlice.actions;
+export const selectNotesToDisplay = (state: { notes: NotesState }) =>
+  state.notes.filteredNotes.length === 0 || state.notes.filteredNotes.length < 0 ? state.notes.notes : state.notes.filteredNotes;
+
+export const { clearError, resetNotesState, openEditModal, closeEditModal, toggleSortOrder, searchNotes } = notesSlice.actions;
 
 export const selectAllNotes = (state: { notes: NotesState }) => state.notes.notes;
 export const selectIsLoading = (state: { notes: NotesState }) => state.notes.isLoading;
