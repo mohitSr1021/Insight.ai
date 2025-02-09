@@ -26,7 +26,7 @@ export const authSignup = createAsyncThunk(
     }
   }
 );
-
+// Login api thunk
 export const authLogin = createAsyncThunk(
   "auth/login",
   async (loginData: Record<string, any>, { rejectWithValue }) => {
@@ -38,6 +38,7 @@ export const authLogin = createAsyncThunk(
     }
   }
 );
+// fetch auth user details
 export const fetchUserProfile = createAsyncThunk(
   "auth/User",
   async (_, { rejectWithValue }) => {

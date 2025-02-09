@@ -181,14 +181,6 @@ const Auth = () => {
             </Form.Item>
           )}
 
-          {isLogin && (
-            <div className="flex justify-end">
-              <a className="text-sm text-purple-600 hover:text-purple-500">
-                Forgot password?
-              </a>
-            </div>
-          )}
-
           <div className="space-y-4">
             <Button
               type="primary"

@@ -89,7 +89,7 @@ const routes: RouteObject[] = [
             </ProtectedRoute>
         ),
     },
-   
+
 ];
 
 export const AuthRouter = createBrowserRouter(routes);
