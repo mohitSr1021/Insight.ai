@@ -206,7 +206,8 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
                 type="text"
                 icon={<ImageIcon className="text-gray-600" size={20} />}
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isRecording || isLoading}
+                // disabled={isRecording || isLoading || true}
+                disabled={true}
               />
             </Tooltip>
 
