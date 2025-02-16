@@ -2,11 +2,13 @@ import { configureStore } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import authReducer from "../slices/AuthSlice/authSlice.tsx";
 import noteReducer from "../slices/NoteSlice/noteSlice.tsx";
+import voiceReducer from "../slices/NoteSlice/speechTranscriptSlice.tsx";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     notes: noteReducer,
+    voice: voiceReducer,
   },
 });
 

@@ -10,6 +10,7 @@ import EditNoteModal from "../../../components/Modal/EditNoteModal"
 import NoteComposer from "../../../components/composer/NoteComposer"
 import Spinner from "../../../components/Spinner/Spinner"
 import useLayoutStatus from "../../../Hooks/useLayoutStatus"
+import SummaryBox from "../../../components/SummaryBox"
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -85,6 +86,7 @@ const Home: React.FC = () => {
             </div>
           )}
         </main>
+        <SummaryBox keyPoints={["dfs","fdsfds"]} summary="loream loreamloreamloream loreamloreamloreamloream" title="ai based" />
         {selectedNote && (
           <EditNoteModal isOpen={isEditModalOpen} onClose={() => dispatch(closeEditModal())} note={selectedNote} />
         )}

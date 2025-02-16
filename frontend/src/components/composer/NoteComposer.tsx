@@ -1,14 +1,21 @@
+"use client"
+
 import { Mic, ImageIcon, Link2, X } from "lucide-react"
 import { Button, Avatar, Tooltip, message, Input } from "antd"
 import { useState, useEffect, useRef } from "react"
 import type React from "react"
-import { RootState, useAppDispatch, useAppSelector } from "../../redux/store/rootStore"
+import { type RootState, useAppDispatch, useAppSelector } from "../../redux/store/rootStore"
 import useLayoutStatus from "../../Hooks/useLayoutStatus"
-import { NoteComposerProps } from "./NoteComposer.types"
+import type { NoteComposerProps } from "./NoteComposer.types"
 import { createNewNote } from "../../redux/api/noteAPI"
 import { resetfilteredNotesState } from "../../redux/slices/NoteSlice/noteSlice"
+import {
+  clearCurrentTranscript,
+  setRecordingStatus,
+  updateTranscript,
+} from "../../redux/slices/NoteSlice/speechTranscriptSlice"
 
-export default function NoteComposer({ onSave }: NoteComposerProps) {
+const NoteComposer = ({ onSave }: NoteComposerProps) => {
   const [url, setUrl] = useState("")
   const [urlError, setUrlError] = useState("")
   const [noteContent, setNoteContent] = useState("")
@@ -19,62 +26,178 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
 
   const timerRef = useRef<number | undefined>(undefined)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const audioChunksRef = useRef<Blob[]>([])
+  const recognitionRef = useRef<any>(null)
   const authUser = useAppSelector((state: RootState) => state.auth)
   const { current } = useLayoutStatus()
   const dispatch = useAppDispatch()
   const { isLoading } = useAppSelector((state) => state.notes)
 
+  const validateUrl = (url: string): boolean => {
+    if (!url.trim()) return true
+    return url.trim().startsWith("https://") || url.trim().startsWith("http://")
+  }
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if ("webkitSpeechRecognition" in window) {
+      const recognition = new (window as any).webkitSpeechRecognition()
+      recognition.continuous = true
+      recognition.interimResults = true
+
+      recognition.onresult = (event: any) => {
+        const results = Array.from(event.results)
+        const transcript = results.map((result) => result[0].transcript).join(" ")
+
+        // Update both Redux state and local state
+        dispatch(updateTranscript(transcript))
+        setNoteContent((prevContent) => {
+          const newContent = prevContent.includes(transcript) ? prevContent : `${prevContent} ${transcript}`.trim()
+
+          // Save to localStorage
+          saveTranscriptToStorage(newContent)
+          return newContent
+        })
+      }
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error)
+        message.error("Speech recognition error. Please try again.")
+        stopRecording()
+      }
+
+      recognition.onend = () => {
+        if (isRecording) {
+          try {
+            recognition.start()
+          } catch (error) {
+            console.error("Failed to restart recognition:", error)
+            stopRecording()
+          }
+        }
+      }
+
+      recognitionRef.current = recognition
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop()
+      }
+    }
+  }, [dispatch, isRecording])
+
+  // Function to save transcript to localStorage
+  const saveTranscriptToStorage = (transcript: string) => {
+    try {
+      const storedTranscripts = JSON.parse(localStorage.getItem("voiceTranscripts") || "[]")
+      const newTranscript = {
+        id: Date.now(),
+        content: transcript,
+        timestamp: new Date().toISOString(),
+        userId: authUser?.user?.id, // If you want to associate with user
+      }
+
+      storedTranscripts.push(newTranscript)
+      localStorage.setItem("voiceTranscripts", JSON.stringify(storedTranscripts))
+    } catch (error) {
+      console.error("Error saving to localStorage:", error)
+    }
+  }
+
+  // Load transcripts from localStorage on component mount
+  useEffect(() => {
+    try {
+      const storedTranscripts = localStorage.getItem("voiceTranscripts")
+      if (storedTranscripts) {
+        const parsedTranscripts = JSON.parse(storedTranscripts)
+        // You can set these to state or Redux if needed
+        console.log("Loaded transcripts:", parsedTranscripts)
+      }
+    } catch (error) {
+      console.error("Error loading from localStorage:", error)
+    }
+  }, [])
+
+  // Timer effect for recording duration
   useEffect(() => {
     if (isRecording) {
-      timerRef.current = setInterval(() => {
+      timerRef.current = window.setInterval(() => {
         setRecordingTime((prev) => prev + 1)
       }, 1000)
     }
 
     return () => {
       if (timerRef.current) {
-        clearInterval(timerRef.current)
+        window.clearInterval(timerRef.current)
+        timerRef.current = undefined
       }
     }
   }, [isRecording])
 
-  const validateUrl = (url: string): boolean => {
-    if (!url.trim()) return true
-    return url.trim().startsWith('https://') || url.trim().startsWith('http://')
-  }
-
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      mediaRecorderRef.current = new MediaRecorder(stream)
-      audioChunksRef.current = []
+      await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data)
-      }
-
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" })
-        onSave?.({ content: URL.createObjectURL(audioBlob), type: "recording" })
-        message.success("Recording saved successfully")
-      }
-
-      mediaRecorderRef.current.start()
-      setIsRecording(true)
       setRecordingTime(0)
+      dispatch(clearCurrentTranscript())
+
+      recognitionRef.current?.start()
+
+      dispatch(setRecordingStatus(true))
+      setIsRecording(true)
+
+      message.success("Voice recording started")
     } catch (error) {
+      console.error("Recording failed:", error)
       message.error("Failed to start recording. Please check your microphone permissions.")
-      console.error(error)
     }
   }
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop()
-      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop())
+    if (!recognitionRef.current || !isRecording) return
+
+    try {
+      recognitionRef.current.stop()
+
+      dispatch(setRecordingStatus(false))
       setIsRecording(false)
+
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current)
+        timerRef.current = undefined
+      }
+
+      // Save final transcript to localStorage
+      if (noteContent.trim()) {
+        saveTranscriptToStorage(noteContent.trim())
+      }
+
+      message.success("Voice recording completed and saved")
+    } catch (error) {
+      console.error("Error stopping recording:", error)
+      message.error("Failed to stop recording properly")
+    }
+  }
+
+  // Optional: Function to get saved transcripts
+  const getSavedTranscripts = () => {
+    try {
+      const storedTranscripts = localStorage.getItem("voiceTranscripts")
+      return storedTranscripts ? JSON.parse(storedTranscripts) : []
+    } catch (error) {
+      console.error("Error reading from localStorage:", error)
+      return []
+    }
+  }
+
+  // Optional: Function to clear transcripts
+  const clearSavedTranscripts = () => {
+    try {
+      localStorage.removeItem("voiceTranscripts")
+      message.success("Cleared all saved transcripts")
+    } catch (error) {
+      console.error("Error clearing localStorage:", error)
+      message.error("Failed to clear saved transcripts")
     }
   }
 
@@ -105,18 +228,18 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
       dispatch(resetfilteredNotesState())
       dispatch(createNewNote(noteData))
         .then((noteData) => {
-          setNoteContent('')
-          setUrl('')
-          setUrlError('')
+          setNoteContent("")
+          setUrl("")
+          setUrlError("")
           setImage(null)
           setShowUrlInput(false)
           message.success(noteData.payload.message)
         })
         .catch((error) => {
-          message.error(error?.message || 'Failed to save note')
+          message.error(error?.message || "Failed to save note")
         })
     } else {
-      message.warning('Please add some content before saving')
+      message.warning("Please add some content before saving")
     }
   }
 
@@ -141,8 +264,43 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
   }
 
   return (
-    <div className={`fixed bottom-0 left-0 right-0 p-4 ${(current === "sm" || current === "xs") ? "backdrop-blur-md !p-0" : ""}`}>
-      <div className={`flex items-center border border-gray-200 hover:border-gray-300 bg-white relative py-2 px-4 flex-col md:flex-row ${(current === "sm" || current === "xs") ? "gap-2 w-full max-w-full py-4 rounded-t-xl" : "gap-3 mx-auto max-w-fit rounded-lg"}`}>
+    <div
+      className={`fixed bottom-0 left-0 right-0 p-4 ${current === "sm" || current === "xs" ? "backdrop-blur-md !p-0" : ""}`}
+    >
+      <div
+        className={`flex items-center border border-gray-200 hover:border-gray-300 bg-white relative py-2 px-4 flex-col md:flex-row ${current === "sm" || current === "xs" ? "gap-2 w-full !min-h-[185px] max-w-full py-4 rounded-t-xl" : "gap-3 mx-auto max-w-fit rounded-lg"}`}
+      >
+        {/* Voice Recording Animation */}
+        {isRecording && (
+          <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center backdrop-blur-sm rounded-lg z-50">
+            <div className="w-full flex fixed bottom-0 flex-col items-center gap-4">
+              <div className="relative w-full">
+                <div
+                  className={`w-24 h-24 mb-0 rounded-full mx-auto bg-gradient-to-r from-blue-500/10 to-purple-500/10 flex items-center justify-center animate-pulse`}
+                >
+                  <div
+                    className={`w-16 h-16 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 flex items-center justify-center animate-pulse delay-75`}
+                  >
+                    <div
+                      className={`w-12 h-12 rounded-full bg-gradient-to-r from-blue-500/30 to-purple-500/30 flex items-center justify-center animate-pulse delay-150`}
+                    >
+                      <Mic className="w-6 h-6 text-red-500" />
+                    </div>
+                  </div>
+                </div>
+                <span className="absolute w-full whitespace-nowrap px-1 mb-2 py-1 flex items-center justify-center gap-2 rounded-lg -bottom-10 left-1/2 transform -translate-x-1/2 text-sm font-semibold animate-pulse">
+                  <svg className="w-3 h-3 animate-ping" fill="currentColor" viewBox="0 0 20 20">
+                    <circle cx="10" cy="10" r="5" />
+                  </svg>
+                  Recording... {recordingTime}s
+                </span>
+              </div>
+              <Button type="primary" danger onClick={stopRecording} className="mt-8">
+                Stop Recording
+              </Button>
+            </div>
+          </div>
+        )}
         <div className="flex items-center gap-2 w-full">
           <Tooltip title="user">
             <Avatar className="cursor-pointer">{authUser?.user?.userName[0].toUpperCase()}</Avatar>
@@ -156,6 +314,7 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
             disabled={isRecording || isLoading}
           />
         </div>
+
         {showUrlInput && (
           <div className="flex flex-col w-full relative">
             <div className="flex items-center gap-2">
@@ -175,10 +334,7 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
               />
             </div>
             {urlError && (
-              <div
-                title={urlError}
-                className="text-red-500 absolute top-[-30px] left-0 !text-[11px] text-nowrap mt-1"
-              >
+              <div title={urlError} className="text-red-500 absolute top-[-30px] left-0 !text-[11px] text-nowrap mt-1">
                 {urlError}
               </div>
             )}
@@ -201,12 +357,11 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
         <div className="w-full flex items-center justify-center gap-4">
           <div className="flex items-center gap-2">
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
-            <Tooltip className="!bg-amber-200" title="Add image - comming soon">
+            <Tooltip title="Add image">
               <Button
                 type="text"
                 icon={<ImageIcon className="text-gray-600" size={20} />}
                 onClick={() => fileInputRef.current?.click()}
-                // disabled={isRecording || isLoading || true}
                 disabled={true}
               />
             </Tooltip>
@@ -223,20 +378,22 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button onClick={handleSave} disabled={isRecording || isLoading || Boolean(urlError) || (!noteContent.trim() && !url.trim() && !image)}>
+            <Button
+              onClick={handleSave}
+              disabled={isRecording || isLoading || Boolean(urlError) || (!noteContent.trim() && !url.trim() && !image)}
+            >
               Save
             </Button>
 
-            <Tooltip title="comming soon">
+            <Tooltip
+              title={!("webkitSpeechRecognition" in window) ? "Speech recognition not supported in your browser" : ""}
+            >
               <Button
-                type="primary"
-                icon={<Mic size={20} />}
+                type={`${isRecording ? "text" : "primary"}`}
                 onClick={isRecording ? stopRecording : startRecording}
-                className={`${isRecording ? "bg-red-600 hover:bg-red-700 animate-pulse" : "bg-red-500 hover:bg-red-600"
-                  } transition-all duration-200`}
-                disabled={true}
+                disabled={!("webkitSpeechRecognition" in window)}
               >
-                {isRecording ? `Recording ${recordingTime}s` : "Record"}
+                {isRecording ? "Recording" : "Record"}
               </Button>
             </Tooltip>
           </div>
@@ -245,3 +402,6 @@ export default function NoteComposer({ onSave }: NoteComposerProps) {
     </div>
   )
 }
+
+export default NoteComposer
+
