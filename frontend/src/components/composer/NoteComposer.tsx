@@ -1,66 +1,72 @@
-"use client"
-
 import { Mic, ImageIcon, Link2, X } from "lucide-react"
 import { Button, Avatar, Tooltip, message, Input } from "antd"
-import { useState, useEffect, useRef } from "react"
-import type React from "react"
-import { type RootState, useAppDispatch, useAppSelector } from "../../redux/store/rootStore"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import type { RootState } from "../../redux/store/rootStore"
+import { useAppDispatch, useAppSelector } from "../../redux/store/rootStore"
 import useLayoutStatus from "../../Hooks/useLayoutStatus"
-import type { NoteComposerProps } from "./NoteComposer.types"
+import { INITIAL_STATE } from "./NoteComposer.types"
 import { createNewNote } from "../../redux/api/noteAPI"
 import { resetfilteredNotesState } from "../../redux/slices/NoteSlice/noteSlice"
 import {
-  clearCurrentTranscript,
-  setRecordingStatus,
+  startRecordingSession,
+  stopRecordingSession,
   updateTranscript,
+  incrementRecordingTime,
+  clearCurrentTranscript,
+  setError,
+  clearError,
+  clearAllVoiceData
 } from "../../redux/slices/NoteSlice/speechTranscriptSlice"
 
-const NoteComposer = ({ onSave }: NoteComposerProps) => {
-  const [url, setUrl] = useState("")
-  const [urlError, setUrlError] = useState("")
-  const [noteContent, setNoteContent] = useState("")
-  const [recordingTime, setRecordingTime] = useState(0)
-  const [image, setImage] = useState<File | null>(null)
-  const [isRecording, setIsRecording] = useState(false)
-  const [showUrlInput, setShowUrlInput] = useState(false)
-
-  const timerRef = useRef<number | undefined>(undefined)
+const NoteComposer = () => {
+  // Memoized selectors
+  const selectAuth = (state: RootState) => state.auth
+  const selectNotes = (state: RootState) => state.notes
+  const selectVoice = (state: RootState) => state.voice
+  const [state, setState] = useState(INITIAL_STATE)
+  // Refs
   const fileInputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
-  const authUser = useAppSelector((state: RootState) => state.auth)
-  const { current } = useLayoutStatus()
+  const timerRef = useRef<number | undefined>(undefined)
+  // Redux state and hooks with memoized selectors
   const dispatch = useAppDispatch()
-  const { isLoading } = useAppSelector((state) => state.notes)
-
-  const validateUrl = (url: string): boolean => {
+  const { current } = useLayoutStatus()
+  const authUser = useAppSelector(selectAuth)
+  const { isLoading } = useAppSelector(selectNotes)
+  const { isRecording, recordingTime, currentTranscript, error } = useAppSelector(selectVoice)
+  // Memoized URL validation
+  const validateUrl = useMemo(() => (url: string): boolean => {
     if (!url.trim()) return true
     return url.trim().startsWith("https://") || url.trim().startsWith("http://")
-  }
+  }, [])
 
-  // Initialize speech recognition
-  useEffect(() => {
+  // Memoized speech recognition setup
+  const setupSpeechRecognition = useCallback(() => {
     if ("webkitSpeechRecognition" in window) {
       const recognition = new (window as any).webkitSpeechRecognition()
       recognition.continuous = true
       recognition.interimResults = true
 
       recognition.onresult = (event: any) => {
-        const results = Array.from(event.results)
-        const transcript = results.map((result) => result[0].transcript).join(" ")
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join(" ")
+          .trim()
 
-        // Update both Redux state and local state
         dispatch(updateTranscript(transcript))
-        setNoteContent((prevContent) => {
-          const newContent = prevContent.includes(transcript) ? prevContent : `${prevContent} ${transcript}`.trim()
 
-          // Save to localStorage
-          saveTranscriptToStorage(newContent)
-          return newContent
-        })
+        if (transcript !== state.lastProcessedResult) {
+          setState(prev => ({
+            ...prev,
+            noteContent: Array.from(new Set([...prev.noteContent.split(' '), ...transcript.split(' ')])).join(' ').trim(),
+            lastProcessedResult: transcript
+          }))
+        }
       }
 
       recognition.onerror = (event: any) => {
         console.error("Speech recognition error:", event.error)
+        dispatch(setError("Speech recognition error. Please try again."))
         message.error("Speech recognition error. Please try again.")
         stopRecording()
       }
@@ -78,51 +84,34 @@ const NoteComposer = ({ onSave }: NoteComposerProps) => {
 
       recognitionRef.current = recognition
     }
+  }, [dispatch, isRecording, state.lastProcessedResult])
 
+  // Memoized class names
+  const containerClassName = useMemo(() => {
+    return `fixed bottom-0 left-0 right-0 p-4 ${current === "sm" || current === "xs" ? "backdrop-blur-md !p-0" : ""}`
+  }, [current])
+
+  const innerContainerClassName = useMemo(() => {
+    return `flex items-center border border-gray-200 hover:border-gray-300 bg-white relative py-2 px-4 flex-col md:flex-row ${current === "sm" || current === "xs"
+      ? "gap-2 w-full !min-h-[185px] max-w-full py-4 rounded-t-xl"
+      : "gap-3 mx-auto max-w-fit rounded-lg"
+      }`
+  }, [current])
+
+  // Effects
+  useEffect(() => {
+    setupSpeechRecognition()
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop()
       }
     }
-  }, [dispatch, isRecording])
+  }, [setupSpeechRecognition])
 
-  // Function to save transcript to localStorage
-  const saveTranscriptToStorage = (transcript: string) => {
-    try {
-      const storedTranscripts = JSON.parse(localStorage.getItem("voiceTranscripts") || "[]")
-      const newTranscript = {
-        id: Date.now(),
-        content: transcript,
-        timestamp: new Date().toISOString(),
-        userId: authUser?.user?.id, // If you want to associate with user
-      }
-
-      storedTranscripts.push(newTranscript)
-      localStorage.setItem("voiceTranscripts", JSON.stringify(storedTranscripts))
-    } catch (error) {
-      console.error("Error saving to localStorage:", error)
-    }
-  }
-
-  // Load transcripts from localStorage on component mount
-  useEffect(() => {
-    try {
-      const storedTranscripts = localStorage.getItem("voiceTranscripts")
-      if (storedTranscripts) {
-        const parsedTranscripts = JSON.parse(storedTranscripts)
-        // You can set these to state or Redux if needed
-        console.log("Loaded transcripts:", parsedTranscripts)
-      }
-    } catch (error) {
-      console.error("Error loading from localStorage:", error)
-    }
-  }, [])
-
-  // Timer effect for recording duration
   useEffect(() => {
     if (isRecording) {
       timerRef.current = window.setInterval(() => {
-        setRecordingTime((prev) => prev + 1)
+        dispatch(incrementRecordingTime())
       }, 1000)
     }
 
@@ -132,108 +121,101 @@ const NoteComposer = ({ onSave }: NoteComposerProps) => {
         timerRef.current = undefined
       }
     }
-  }, [isRecording])
+  }, [isRecording, dispatch])
 
-  const startRecording = async () => {
+  useEffect(() => {
+    if (error) {
+      message.error(error)
+      dispatch(clearError())
+    }
+  }, [error, dispatch])
+
+  useEffect(() => {
+    return () => {
+      if (isRecording) {
+        stopRecording()
+      }
+    }
+  }, [])
+
+  // Memoized handlers
+  const startRecording = useCallback(async () => {
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true })
-
-      setRecordingTime(0)
       dispatch(clearCurrentTranscript())
-
+      setState(prev => ({ ...prev, lastProcessedResult: "" }))
       recognitionRef.current?.start()
-
-      dispatch(setRecordingStatus(true))
-      setIsRecording(true)
-
+      dispatch(startRecordingSession())
       message.success("Voice recording started")
     } catch (error) {
       console.error("Recording failed:", error)
+      dispatch(setError("Failed to start recording. Please check your microphone permissions."))
       message.error("Failed to start recording. Please check your microphone permissions.")
     }
-  }
+  }, [dispatch])
 
-  const stopRecording = () => {
+  const stopRecording = useCallback(() => {
     if (!recognitionRef.current || !isRecording) return
 
     try {
       recognitionRef.current.stop()
 
-      dispatch(setRecordingStatus(false))
-      setIsRecording(false)
+      if (currentTranscript) {
+        setState(prev => ({
+          ...prev,
+          noteContent: Array.from(new Set([...prev.noteContent.split(' '), ...currentTranscript.split(' ')])).join(' ').trim()
+        }))
+      }
+
+      dispatch(stopRecordingSession({ userId: authUser?.user?.id }))
 
       if (timerRef.current) {
         window.clearInterval(timerRef.current)
         timerRef.current = undefined
       }
 
-      // Save final transcript to localStorage
-      if (noteContent.trim()) {
-        saveTranscriptToStorage(noteContent.trim())
-      }
-
       message.success("Voice recording completed and saved")
     } catch (error) {
       console.error("Error stopping recording:", error)
+      dispatch(setError("Failed to stop recording properly"))
       message.error("Failed to stop recording properly")
     }
-  }
+  }, [isRecording, currentTranscript, dispatch, authUser?.user?.id])
 
-  // Optional: Function to get saved transcripts
-  const getSavedTranscripts = () => {
-    try {
-      const storedTranscripts = localStorage.getItem("voiceTranscripts")
-      return storedTranscripts ? JSON.parse(storedTranscripts) : []
-    } catch (error) {
-      console.error("Error reading from localStorage:", error)
-      return []
-    }
-  }
-
-  // Optional: Function to clear transcripts
-  const clearSavedTranscripts = () => {
-    try {
-      localStorage.removeItem("voiceTranscripts")
-      message.success("Cleared all saved transcripts")
-    } catch (error) {
-      console.error("Error clearing localStorage:", error)
-      message.error("Failed to clear saved transcripts")
-    }
-  }
-
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      if (file.type.startsWith("image/")) {
-        setImage(file)
-        message.success("Image attached successfully")
-      } else {
-        message.error("Please select an image file")
-      }
-    }
-  }
-
-  const handleSave = () => {
-    if (noteContent.trim() || url.trim() || image) {
-      if (!validateUrl(url)) {
-        setUrlError("Please enter a valid URL starting with http:// or https://")
+  const handleSave = useCallback(() => {
+    if (state.noteContent.trim() || state.url.trim() || state.image) {
+      if (!validateUrl(state.url)) {
+        setState(prev => ({ ...prev, urlError: "Please enter a valid URL starting with http:// or https://" }))
         return
       }
 
       const noteData = {
-        content: noteContent.trim(),
-        ...(url.trim() && { link: url.trim() }),
+        content: state.noteContent.trim(),
+        ...(state.url.trim() && { link: state.url.trim() }),
       }
 
       dispatch(resetfilteredNotesState())
       dispatch(createNewNote(noteData))
-        .then((noteData) => {
-          setNoteContent("")
-          setUrl("")
-          setUrlError("")
-          setImage(null)
-          setShowUrlInput(false)
-          message.success(noteData.payload.message)
+        .then((response) => {
+          // Clear component state
+          setState({
+            url: "",
+            urlError: "",
+            noteContent: "",
+            image: null,
+            showUrlInput: false,
+            lastProcessedResult: ""
+          })
+
+          // Clear voice-related Redux state and localStorage
+          dispatch(clearAllVoiceData())
+
+          // Stop any ongoing recording
+          if (isRecording) {
+            stopRecording()
+          }
+
+          message.success(response.payload.message)
         })
         .catch((error) => {
           message.error(error?.message || "Failed to save note")
@@ -241,49 +223,32 @@ const NoteComposer = ({ onSave }: NoteComposerProps) => {
     } else {
       message.warning("Please add some content before saving")
     }
-  }
+  }, [state, dispatch, validateUrl, isRecording, stopRecording])
 
-  const handleClearUrl = () => {
-    setUrl("")
-    setUrlError("")
-    setShowUrlInput(false)
-  }
-
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newUrl = e.target.value
-    setUrl(newUrl)
-    if (newUrl && !validateUrl(newUrl)) {
-      setUrlError("Please enter a valid URL starting with http:// or https://")
-    } else {
-      setUrlError("")
+  const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      if (file.type.startsWith("image/")) {
+        setState(prev => ({ ...prev, image: file }))
+        message.success("Image attached successfully")
+      } else {
+        message.error("Please select an image file")
+      }
     }
-  }
+  }, [])
 
-  const handleClearImage = () => {
-    setImage(null)
-  }
-
+  // Render
   return (
-    <div
-      className={`fixed bottom-0 left-0 right-0 p-4 ${current === "sm" || current === "xs" ? "backdrop-blur-md !p-0" : ""}`}
-    >
-      <div
-        className={`flex items-center border border-gray-200 hover:border-gray-300 bg-white relative py-2 px-4 flex-col md:flex-row ${current === "sm" || current === "xs" ? "gap-2 w-full !min-h-[185px] max-w-full py-4 rounded-t-xl" : "gap-3 mx-auto max-w-fit rounded-lg"}`}
-      >
-        {/* Voice Recording Animation */}
+    <div className={containerClassName}>
+      <div className={innerContainerClassName}>
+        {/* Recording Animation */}
         {isRecording && (
           <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center backdrop-blur-sm rounded-lg z-50">
             <div className="w-full flex fixed bottom-0 flex-col items-center gap-4">
               <div className="relative w-full">
-                <div
-                  className={`w-24 h-24 mb-0 rounded-full mx-auto bg-gradient-to-r from-blue-500/10 to-purple-500/10 flex items-center justify-center animate-pulse`}
-                >
-                  <div
-                    className={`w-16 h-16 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 flex items-center justify-center animate-pulse delay-75`}
-                  >
-                    <div
-                      className={`w-12 h-12 rounded-full bg-gradient-to-r from-blue-500/30 to-purple-500/30 flex items-center justify-center animate-pulse delay-150`}
-                    >
+                <div className="w-24 h-24 mb-0 rounded-full mx-auto bg-gradient-to-r from-blue-500/10 to-purple-500/10 flex items-center justify-center animate-pulse">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 flex items-center justify-center animate-pulse delay-75">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500/30 to-purple-500/30 flex items-center justify-center animate-pulse delay-150">
                       <Mic className="w-6 h-6 text-red-500" />
                     </div>
                   </div>
@@ -301,62 +266,82 @@ const NoteComposer = ({ onSave }: NoteComposerProps) => {
             </div>
           </div>
         )}
+
+        {/* Main Input Area */}
         <div className="flex items-center gap-2 w-full">
-          <Tooltip title="user">
+          <Tooltip title={authUser?.user?.userName}>
             <Avatar className="cursor-pointer">{authUser?.user?.userName[0].toUpperCase()}</Avatar>
           </Tooltip>
           <Input.TextArea
             className="flex-1 w-full !min-w-72"
             placeholder="Write a note..."
-            value={noteContent}
-            onChange={(e) => setNoteContent(e.target.value)}
+            value={state.noteContent}
+            onChange={(e) => setState(prev => ({ ...prev, noteContent: e.target.value }))}
             autoSize={{ minRows: 1, maxRows: 4 }}
             disabled={isRecording || isLoading}
           />
         </div>
 
-        {showUrlInput && (
+        {/* URL Input */}
+        {state.showUrlInput && (
           <div className="flex flex-col w-full relative">
             <div className="flex items-center gap-2">
               <Input
                 placeholder="Enter URL..."
-                value={url}
-                onChange={handleUrlChange}
-                status={urlError ? "error" : ""}
+                value={state.url}
+                onChange={(e) => {
+                  const newUrl = e.target.value
+                  setState(prev => ({
+                    ...prev,
+                    url: newUrl,
+                    urlError: newUrl && !validateUrl(newUrl)
+                      ? "Please enter a valid URL starting with http:// or https://"
+                      : ""
+                  }))
+                }}
+                status={state.urlError ? "error" : ""}
                 disabled={isRecording || isLoading}
               />
               <Button
                 type="text"
                 icon={<X size={16} />}
-                onClick={handleClearUrl}
+                onClick={() => setState(prev => ({ ...prev, url: "", urlError: "", showUrlInput: false }))}
                 className="text-gray-400 hover:text-gray-600"
                 disabled={isLoading}
               />
             </div>
-            {urlError && (
-              <div title={urlError} className="text-red-500 absolute top-[-30px] left-0 !text-[11px] text-nowrap mt-1">
-                {urlError}
+            {state.urlError && (
+              <div title={state.urlError} className="text-red-500 absolute top-[-30px] left-0 !text-[11px] text-nowrap mt-1">
+                {state.urlError}
               </div>
             )}
           </div>
         )}
 
-        {image && (
+        {/* Image Preview */}
+        {state.image && (
           <div className="flex items-center gap-2 mb-2 w-full">
-            <span className="text-sm text-gray-600">{image.name}</span>
+            <span className="text-sm text-gray-600">{state.image.name}</span>
             <Button
               type="text"
               icon={<X size={16} />}
-              onClick={handleClearImage}
+              onClick={() => setState(prev => ({ ...prev, image: null }))}
               className="text-gray-400 hover:text-gray-600"
               disabled={isLoading}
             />
           </div>
         )}
 
+        {/* Action Buttons */}
         <div className="w-full flex items-center justify-center gap-4">
           <div className="flex items-center gap-2">
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageUpload}
+            />
             <Tooltip title="Add image">
               <Button
                 type="text"
@@ -371,8 +356,8 @@ const NoteComposer = ({ onSave }: NoteComposerProps) => {
                 type="text"
                 className={`${isLoading ? "!cursor-not-allowed !bg-slate-100" : ""}`}
                 icon={<Link2 className="text-gray-600" size={20} />}
-                onClick={() => setShowUrlInput(true)}
-                disabled={isLoading || isRecording || showUrlInput}
+                onClick={() => setState(prev => ({ ...prev, showUrlInput: true }))}
+                disabled={isLoading || isRecording || state.showUrlInput}
               />
             </Tooltip>
           </div>
@@ -380,7 +365,12 @@ const NoteComposer = ({ onSave }: NoteComposerProps) => {
           <div className="flex items-center gap-2">
             <Button
               onClick={handleSave}
-              disabled={isRecording || isLoading || Boolean(urlError) || (!noteContent.trim() && !url.trim() && !image)}
+              disabled={
+                isRecording ||
+                isLoading ||
+                Boolean(state.urlError) ||
+                (!state.noteContent.trim() && !state.url.trim() && !state.image)
+              }
             >
               Save
             </Button>
@@ -404,4 +394,3 @@ const NoteComposer = ({ onSave }: NoteComposerProps) => {
 }
 
 export default NoteComposer
-

@@ -1,8 +1,8 @@
-export interface NoteComposerProps {
-  onSave?: (note: {
-    content: string;
-    type: "text" | "recording";
-    url?: string;
-    image?: File;
-  }) => void;
-}
+export const INITIAL_STATE = {
+  url: "",
+  urlError: "",
+  noteContent: "",
+  image: null as File | null,
+  showUrlInput: false,
+  lastProcessedResult: ""
+};

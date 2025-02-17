@@ -86,7 +86,7 @@ const Home: React.FC = () => {
             </div>
           )}
         </main>
-        <SummaryBox keyPoints={["dfs","fdsfds"]} summary="loream loreamloreamloream loreamloreamloreamloream" title="ai based" />
+        <SummaryBox />
         {selectedNote && (
           <EditNoteModal isOpen={isEditModalOpen} onClose={() => dispatch(closeEditModal())} note={selectedNote} />
         )}
