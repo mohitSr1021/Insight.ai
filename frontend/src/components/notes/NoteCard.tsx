@@ -1,7 +1,7 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import { useAppDispatch, useAppSelector } from "../../redux/store/rootStore"
-import { openEditModal, } from "../../redux/slices/NoteSlice/noteSlice"
+import { openEditModal, } from "../../redux/slices/NotesSlice/notesSlice"
 import {
   Edit2,
   MoreVertical,
@@ -10,16 +10,18 @@ import {
   ExternalLink,
   CopyIcon,
   Star,
-  Loader2
+  Loader2,
+  ExternalLinkIcon
 } from "lucide-react"
 import { formatDate, NoteCardProps } from "./NoteCard.types"
 import { deleteExistingNote, toggleNoteFavorite } from "../../redux/api/noteAPI"
 import { message } from "antd"
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 
 const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
   const dispatch = useAppDispatch()
   const location = useLocation()
+  const navigate = useNavigate()
   const [IsLoading, setIsLoading] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isFavorite, setIsFavorite] = useState(note.isFavourite)
@@ -28,6 +30,17 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
   useEffect(() => {
     setIsFavorite(note.isFavourite)
   }, [note.isFavourite])
+
+  // Navigate to note view
+  const handleNavigateToNoteView = (e: React.MouseEvent) => {
+    // Prevent navigation if clicking on buttons or links
+    if ((e.target as HTMLElement).closest('button') || 
+        (e.target as HTMLElement).closest('a')) {
+      return;
+    }
+    
+    navigate(`/notes/${note._id}`);
+  };
 
   // delete note 
   const handleDeleteNote = async (noteId: string) => {
@@ -59,9 +72,20 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
   };
 
   return (
-    <div className="group relative hover:opacity-60 bg-white min-h-[280px] rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-gray-100 overflow-hidden">
+    <div 
+      className="group relative hover:opacity-60 bg-white min-h-[280px] rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full border border-gray-100 overflow-hidden cursor-pointer"
+      onClick={handleNavigateToNoteView}
+    >
       <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none" />
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      {/* View indicator that appears on hover */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
+        <div className="bg-white/90 backdrop-blur-sm shadow-lg rounded-full p-3 transform transition-transform duration-300">
+          <ExternalLinkIcon size={22} className="text-blue-600" />
+        </div>
+      </div>
+      
       <div className="p-6 flex flex-col h-full relative">
         <div className="flex justify-between items-start mb-4">
           <h3 className="font-bold text-xl text-gray-900 tracking-tight line-clamp-2 flex-grow pr-8 select-text">
@@ -69,7 +93,10 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
           </h3>
           <div className="relative flex items-center gap-1">
             <button
-              onClick={() => handleFavoriteToggle(note?._id, userId)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleFavoriteToggle(note?._id, userId);
+              }}
               disabled={IsLoading}
               className={`p-2 rounded-full transition-colors ${IsLoading ? "opacity-50" : "hover:bg-gray-100"
                 }`}
@@ -85,7 +112,8 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
             </button>
 
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 if (note?.content) {
                   navigator.clipboard.writeText(note.content);
                   message.success("Note copied to clipboard!");
@@ -101,7 +129,10 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
             {
               location.pathname === "/favourites" ? null : (
                 <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMenuOpen(!isMenuOpen);
+                  }}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
                   <MoreVertical size={18} className="text-gray-500" />
@@ -110,7 +141,10 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
             }
 
             {isMenuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden py-1">
+              <div 
+                className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden py-1"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <button
                   onClick={() => {
                     dispatch(openEditModal(note._id));
@@ -140,13 +174,14 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
                 ? note.link
                 : `https://${note.link}`
               }`}
-
-            target="_Blank"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center text-sm text-blue-600 hover:text-blue-700 py-2 group/link z-10"
+            onClick={(e) => e.stopPropagation()}
           >
             <LinkIcon size={14} className="mr-1.5" />
             <span className="truncate flex-grow">{note.link}</span>
-            <ExternalLink size={12} className="ml-1 group-hover/link:opacity-100 transition-opacity" />
+            <ExternalLink size={12} className="ml-1 opacity-70 group-hover/link:opacity-100 transition-opacity" />
           </a>
         )}
 

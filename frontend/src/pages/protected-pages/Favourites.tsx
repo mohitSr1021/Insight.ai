@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { fetchNotes } from '../../redux/api/noteAPI';
 import { useAppDispatch, useAppSelector } from '../../redux/store/rootStore';
 import NoteCard from '../../components/notes/NoteCard';
-import { selectAllNotes, selectIsLoading } from '../../redux/slices/NoteSlice/noteSlice';
+import { selectAllNotes, selectIsLoading } from '../../redux/slices/NotesSlice/notesSlice';
 import useLayoutStatus from '../../Hooks/useLayoutStatus';
 import Spinner from '../../components/Spinner/Spinner';
 

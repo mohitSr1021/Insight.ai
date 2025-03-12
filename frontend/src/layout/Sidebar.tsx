@@ -6,7 +6,7 @@ import useLayoutStatus from "../Hooks/useLayoutStatus";
 import { useAppDispatch } from "../redux/store/rootStore";
 import { logout } from "../redux/slices/AuthSlice/authSlice.tsx";
 import { message } from "antd";
-import { resetNotesState } from "../redux/slices/NoteSlice/noteSlice.tsx";
+import { resetNotesState } from "../redux/slices/NotesSlice/notesSlice.tsx";
 
 const Sidebar = () => {
     const [isOpen, setIsOpen] = useState(false);

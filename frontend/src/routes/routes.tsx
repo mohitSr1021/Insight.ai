@@ -10,6 +10,7 @@ const Home = lazy(() => import("../pages/protected-pages/Home/Home.tsx"));
 const About = lazy(() => import("../pages/protected-pages/About/About.tsx"));
 const Profile = lazy(() => import("../pages/protected-pages/Profile/Profile.tsx"));
 const NotFound = lazy(() => import("../pages/protected-pages/NoteFound/NoteFound.tsx"));
+const NoteView = lazy(() => import("../pages/protected-pages/NoteView/NoteView.tsx"));
 
 const routes: RouteObject[] = [
     {
@@ -43,6 +44,22 @@ const routes: RouteObject[] = [
                     <ProtectedRoute>
                         <SuspenseWrapper>
                             <Home />
+                        </SuspenseWrapper>
+                    </ProtectedRoute>
+                ),
+            },
+        ],
+    },
+    {
+        path: "/notes/:noteId",
+        element: <App />,
+        children: [
+            {
+                path: "",
+                element: (
+                    <ProtectedRoute>
+                        <SuspenseWrapper>
+                            <NoteView />
                         </SuspenseWrapper>
                     </ProtectedRoute>
                 ),

@@ -3,7 +3,7 @@ import { Search, FilterIcon, X } from "lucide-react";
 import SortButton from "../components/Buttons/SortButton";
 import useLayoutStatus from "../Hooks/useLayoutStatus";
 import { useAppDispatch, useAppSelector } from "../redux/store/rootStore";
-import { resetfilteredNotesState, searchNotes, selectSortOrder, toggleSortOrder } from "../redux/slices/NoteSlice/noteSlice";
+import { resetfilteredNotesState, searchNotes, selectSortOrder, toggleSortOrder } from "../redux/slices/NotesSlice/notesSlice.tsx";
 import { Tooltip } from "antd";
 import useDebounce from "../Hooks/useDebounce.ts";
 

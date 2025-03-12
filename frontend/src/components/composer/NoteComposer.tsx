@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from "../../redux/store/rootStore"
 import useLayoutStatus from "../../Hooks/useLayoutStatus"
 import { INITIAL_STATE } from "./NoteComposer.types"
 import { createNewNote } from "../../redux/api/noteAPI"
-import { resetfilteredNotesState } from "../../redux/slices/NoteSlice/noteSlice"
+import { resetfilteredNotesState } from "../../redux/slices/NotesSlice/notesSlice"
 import {
   startRecordingSession,
   stopRecordingSession,

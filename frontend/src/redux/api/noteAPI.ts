@@ -18,6 +18,40 @@ export const fetchNotes = createAsyncThunk(
   }
 );
 
+// ===================================================================================================================================
+// ===================================================================================================================================
+// ===================================================================================================================================
+
+export const fetchNote = createAsyncThunk(
+  "notes/fetchNote",
+  async (noteId: string, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`/notes/${noteId}`);
+      return {
+        note: response.data.note,
+        suggestions: {
+          relatedTopics: response.data.suggestions?.relatedTopics || [],
+          relatedArticles: response.data.suggestions?.relatedArticles || [],
+          relatedVideos: response.data.suggestions?.relatedVideos || [],
+          relatedImages: response.data.suggestions?.relatedImages || [],
+          relatedWebsites: response.data.suggestions?.relatedWebsites || [],
+          relatedBlogs: response.data.suggestions?.relatedBlogs || [],
+          relatedLinks: response.data.suggestions?.relatedLinks || [],
+        },
+        keywords: response.data.note.content || "",
+      };
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to load note"
+      );
+    }
+  }
+);
+
+// =================================================================================================================================
+// =================================================================================================================================
+// =================================================================================================================================
+
 // Create a new note API thunk
 export const createNewNote = createAsyncThunk(
   "notes/createNewNote",
