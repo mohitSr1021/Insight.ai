@@ -11,7 +11,6 @@ Insight.ai is an AI-powered smart notes application designed to enhance your not
 ## 🚧 Upcoming Features  
 🔹 **Voice-to-Text Conversion** – Hands-free note-taking with speech recognition.  
 🔹 **Smart Reminders** – Set automatic reminders for important notes.  
-🔹 **Collaboration Tools** – Share and edit notes with your team in real time.  
 
 ## 🌍 Live Demo  
 Check out the live demo here: **[Insight.ai Live](https://insightai-dev.vercel.app/)**  
